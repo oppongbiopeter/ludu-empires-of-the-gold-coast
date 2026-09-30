@@ -1240,21 +1240,92 @@ function ensureBoardDice(){
   board.appendChild(box);
   return box;
 }
+function dieFaceHTML(n){
+  const sets={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+  const on=sets[n]||[];
+  let pips='';
+  for(let i=0;i<9;i++) pips+=`<i class="${on.indexOf(i)>=0?'on':''}"></i>`;
+  return `<span class="die-face"><span class="pips">${pips}</span><span class="face-n">${n}</span></span>`;
+}
 function paintDie(el, n){
   if(!el) return;
-  el.dataset.n=String(n);
-  el.textContent=(n||n===0)&&n!=='?' ? String(n) : '?';
+  const face=(typeof n==='number' && n>=1 && n<=6) ? n : 0;
+  el.dataset.n=face?String(face):'?';
+  if(el.classList.contains('bdie')){
+    el.innerHTML=face?dieFaceHTML(face):'<span class="die-face"><span class="face-n">?</span></span>';
+    el.setAttribute('aria-label', face?('Die showing '+face):'Die');
+  } else {
+    el.textContent=face?String(face):'?';
+  }
 }
-function tumbleDice(){
+const DIE_SPIN=[
+  {transform:'translateY(0) rotate(0deg) scale(1)'},
+  {transform:'translateY(-38px) rotate(-150deg) scale(1.1)', offset:0.22},
+  {transform:'translateY(-6px) rotate(-300deg) scale(0.94)', offset:0.48},
+  {transform:'translateY(-32px) rotate(-480deg) scale(1.08)', offset:0.72},
+  {transform:'translateY(-16px) rotate(-680deg) scale(1.02)'}
+];
+function tumbleDice(finals){
   return new Promise(resolve=>{
     const box=ensureBoardDice();
     if(!box){ resolve(); return; }
-    box.classList.add('show','tumble');
-    const iv=setInterval(()=>{
-      paintDie(document.getElementById('bd1'), 1+Math.floor(Math.random()*6));
-      paintDie(document.getElementById('bd2'), 1+Math.floor(Math.random()*6));
-    }, pace(70));
-    setTimeout(()=>{ clearInterval(iv); box.classList.remove('tumble'); resolve(); }, pace(900));
+    const n=dieCount();
+    const faces=[];
+    for(let i=0;i<n;i++){
+      const v=finals && finals[i];
+      faces.push(v>=1 && v<=6 ? v : 1+Math.floor(Math.random()*6));
+    }
+    syncDiceChrome();
+    box.classList.add('show');
+    box.classList.remove('tumble','land');
+    const dice=[document.getElementById('bd1'), document.getElementById('bd2')];
+    const docks=[document.getElementById('die1'), document.getElementById('die2')];
+    const cap=document.getElementById('bd-cap');
+    if(cap){ cap.textContent='Rolling'; cap.style.color='#f0d77b'; }
+    const reduce=window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const spin=reduce ? 80 : pace(980);
+    const bounce=reduce ? 60 : pace(460);
+    for(let i=0;i<n;i++){
+      if(docks[i]) docks[i].classList.add('roll');
+      const face=1+Math.floor(Math.random()*6);
+      paintDie(dice[i], face);
+      paintDie(docks[i], face);
+      if(dice[i] && !reduce){
+        dice[i].getAnimations().forEach(a=>a.cancel());
+        dice[i].animate(DIE_SPIN, {duration:spin, delay:i*50, easing:'linear', fill:'forwards'});
+      }
+    }
+    let settled=false;
+    const iv=reduce?null:setInterval(()=>{
+      if(settled) return;
+      for(let i=0;i<n;i++){
+        const face=1+Math.floor(Math.random()*6);
+        paintDie(dice[i], face);
+        paintDie(docks[i], face);
+      }
+    }, Math.max(70, Math.round(spin/9)));
+    setTimeout(()=>{
+      settled=true;
+      if(iv) clearInterval(iv);
+      for(let i=0;i<n;i++){
+        paintDie(dice[i], faces[i]);
+        paintDie(docks[i], faces[i]);
+        if(dice[i]){
+          dice[i].getAnimations().forEach(a=>a.cancel());
+          if(!reduce){
+            dice[i].animate([
+              {transform:'translateY(-26px) rotate(-14deg) scale(1.1)'},
+              {transform:'translateY(5px) rotate(4deg) scale(0.97)', offset:0.66},
+              {transform:'translateY(0) rotate(0deg) scale(1)'}
+            ], {duration:bounce, easing:'cubic-bezier(.18,1.25,.32,1)', fill:'forwards'});
+          }
+        }
+        if(docks[i]){ docks[i].classList.remove('roll'); docks[i].classList.add('slam'); }
+      }
+      if(cap) cap.textContent=faces.join('  ·  ');
+      setTimeout(()=>docks.forEach(d=>{ if(d) d.classList.remove('slam'); }), bounce);
+      setTimeout(resolve, bounce);
+    }, spin);
   });
 }
 function showBoardDice(a,b,cap){
@@ -1280,7 +1351,14 @@ function showBoardDice(a,b,cap){
 }
 function hideBoardDice(){
   const box=document.getElementById('board-dice');
-  if(box) box.classList.remove('show','tumble');
+  if(!box) return;
+  box.classList.remove('show','tumble','land');
+  ['bd1','bd2'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    el.getAnimations().forEach(a=>a.cancel());
+    el.style.transform='';
+  });
 }
 function buildBoard(){
   const ov=document.getElementById('overlay'); ov.innerHTML='';
@@ -1857,12 +1935,12 @@ async function rollDice(){
   document.getElementById('roll-btn').disabled=true;
   AudioFX.dice();
   const raw=rollFaces();
-  await tumbleDice();
   const moves=penalize(pl, raw);
+  await tumbleDice(moves);
   G.rawDice=raw;
   G.dice=moves; G.spent=moves.map(()=>false); G.pick=0; G.rolled=true;
-  if(d1){ d1.textContent=moves[0]; d1.classList.remove('roll'); d1.classList.add('slam'); }
-  if(d2){ d2.textContent=moves[1]||'?'; d2.classList.remove('roll'); if(moves[1]) d2.classList.add('slam'); }
+  if(d1){ paintDie(d1, moves[0]); d1.classList.remove('roll'); d1.classList.add('slam'); }
+  if(d2){ paintDie(d2, moves[1]||0); d2.classList.remove('roll'); if(moves[1]) d2.classList.add('slam'); }
   setTimeout(()=>{ if(d1) d1.classList.remove('slam'); if(d2) d2.classList.remove('slam'); },350);
   if(bonusRoll()) log(bonusLabel(), true);
   const cut=moves.some((m,i)=>m!==raw[i])?` Harmattan cuts them to ${moves.join(' and ')}.`:'';
@@ -2138,7 +2216,7 @@ function applyLeader(pl){
 
 function endTurn(){
   if(!G || G.over) return;
-  if(G.busy){ log('Wait — the piece is still stepping.'); return; }
+  if(G.busy){ log(G.rolled ? 'Wait — the piece is still stepping.' : 'The die is still rolling.'); return; }
   if(G.pendingRevive){ log('Choose the discarded card the priestess restores, or send her back to your hand.'); return; }
   const pl=cur();
   if(!pl || pl.isAI) return;
@@ -2241,16 +2319,16 @@ function aiPlay(){
   setTimeout(async ()=>{
     if(G.over||cur()!==pl) return;
     const raw=rollFaces();
+    const moves=penalize(pl, raw);
     G.busy=true;
     AudioFX.dice();
-    await tumbleDice();
+    await tumbleDice(moves);
     if(G.over||cur()!==pl){ G.busy=false; return; }
     G.rawDice=raw;
-    let moves=penalize(pl, raw);
     G.dice=moves; G.spent=moves.map(()=>false); G.rolled=true; G.pick=0;
     const d1=document.getElementById('die1'), d2=document.getElementById('die2');
-    if(d1) d1.textContent=moves[0];
-    if(d2) d2.textContent=moves[1]||'?';
+    if(d1) paintDie(d1, moves[0]);
+    if(d2) paintDie(d2, moves[1]||0);
     log(`${pl.name} rolled ${moves.join(' and ')}. ${pl.faction.name} moves.`);
     G.busy=false;
     showBoardDice(moves[0], moves[1], pl.faction.name+' moves '+moves.join(' and '));
@@ -2542,7 +2620,12 @@ const AudioFX = {
     }catch(e){}
   },
   ui(){ this.tone(880,0.05,'square',0.04); },
-  dice(){ this.noise(0.06,0.07); this.tone(200,0.08,'triangle',0.06,0.02); this.tone(150,0.1,'triangle',0.05,0.06); },
+  dice(){
+    for(let i=0;i<8;i++){
+      this.noise(0.045, 0.055, i*0.09);
+      this.tone(160+((i*37)%90), 0.05, 'triangle', 0.045, i*0.09);
+    }
+  },
   move(){ this.tone(420,0.07,'sine',0.05); this.tone(520,0.06,'sine',0.04,0.05); },
   capture(){ this.tone(180,0.12,'sawtooth',0.07); this.tone(90,0.2,'sawtooth',0.06,0.05); this.noise(0.1,0.06); },
   card(){ this.tone(660,0.08,'triangle',0.05); this.tone(880,0.1,'triangle',0.04,0.06); },

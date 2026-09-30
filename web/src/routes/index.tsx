@@ -16,7 +16,7 @@ function Home() {
     if (window.__luduBooted) return;
     window.__luduBooted = true;
     const s = document.createElement("script");
-    s.src = "/ludu/game.js?v=board10";
+    s.src = "/ludu/game.js?v=board12";
     s.async = false;
     document.body.appendChild(s);
   }, []);
