@@ -1,0 +1,2019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LUDU: Empires of the Gold Coast</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+:root{
+  --gold:#d4af37;--gold-l:#f0d77b;--gold-d:#8b6914;
+  --bg:#0a0806;--panel:#14100c;--panel2:#1c1610;--text:#f5e6c8;--muted:#a89070;
+  --ashanti:#c9a227;--dagbon:#3a7abd;--fante:#0d9a9e;--ewe:#9b4d96;
+  --danger:#c44;--ok:#4a8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Crimson Text',serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+h1,h2,h3,.cinzel{font-family:'Cinzel',serif}
+button{font-family:'Cinzel',serif;cursor:pointer}
+.screen{display:none;min-height:100vh}
+.screen.active{display:flex;flex-direction:column}
+
+/* Gwent-like cinematic overlays */
+.fx-layer{position:fixed;inset:0;pointer-events:none;z-index:900}
+.fx-flash{position:absolute;inset:0;background:#fff;opacity:0;transition:opacity .15s}
+.fx-flash.on{opacity:.12}
+.fx-banner{position:absolute;left:0;right:0;top:38%;text-align:center;
+  font-family:'Cinzel',serif;font-size:clamp(1.4rem,4vw,2.4rem);letter-spacing:.2em;
+  color:var(--gold-l);text-shadow:0 0 30px rgba(212,175,55,.8),0 4px 20px #000;
+  opacity:0;transform:scale(.8);transition:.4s cubic-bezier(.2,1.2,.4,1);pointer-events:none}
+.fx-banner.show{opacity:1;transform:scale(1)}
+.card-fly{position:fixed;z-index:950;width:100px;height:140px;border-radius:8px;overflow:hidden;
+  border:2px solid var(--gold);box-shadow:0 0 40px rgba(212,175,55,.6);pointer-events:none;
+  transition:transform .55s cubic-bezier(.2,.8,.2,1),opacity .55s}
+.shake{animation:boardShake .4s ease}
+@keyframes boardShake{0%,100%{transform:translate(0)}20%{transform:translate(-4px,2px)}40%{transform:translate(4px,-2px)}60%{transform:translate(-3px,-1px)}80%{transform:translate(3px,1px)}}
+@keyframes pulseGold{0%,100%{box-shadow:0 0 0 0 rgba(212,175,55,.5)}50%{box-shadow:0 0 20px 6px rgba(212,175,55,.35)}}
+@keyframes drawIn{from{transform:translateY(40px) scale(.7);opacity:0}to{transform:none;opacity:1}}
+@keyframes tokenHop{0%{transform:scale(1)}40%{transform:scale(1.35) translateY(-8px)}100%{transform:scale(1)}}
+.token.hop{animation:tokenHop .35s ease}
+
+/* Buttons */
+.btn{background:linear-gradient(180deg,var(--gold-l),var(--gold-d));color:#1a1005;border:none;
+  padding:.85rem 1.8rem;font-size:.95rem;font-weight:700;letter-spacing:.1em;border-radius:4px;
+  transition:.25s;box-shadow:0 4px 18px rgba(212,175,55,.3);text-transform:uppercase}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(212,175,55,.5)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-ghost{background:transparent;border:2px solid var(--gold);color:var(--gold);margin:.35rem}
+.btn-ghost:hover{background:rgba(212,175,55,.12)}
+.btn-sm{padding:.45rem 1rem;font-size:.75rem}
+.btn-danger{background:linear-gradient(180deg,#c66,#722);color:#fff}
+
+/* TITLE / HUB */
+#hub-screen{justify-content:center;align-items:center;text-align:center;padding:1.2rem;
+  background:radial-gradient(ellipse at 50% 30%,#2a1f12 0%,#0a0806 65%);position:relative}
+#hub-screen .hero{width:min(400px,88vw);border-radius:12px;border:2px solid var(--gold-d);
+  box-shadow:0 0 50px rgba(212,175,55,.3);margin-bottom:1rem}
+#hub-screen h1{font-size:clamp(2rem,7vw,3.4rem);font-weight:900;letter-spacing:.14em;
+  background:linear-gradient(180deg,#f5e6c8,var(--gold),var(--gold-d));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{letter-spacing:.28em;color:var(--gold);font-size:.85rem;text-transform:uppercase;margin:.25rem 0 .6rem}
+.tag{font-style:italic;color:var(--muted);margin-bottom:1.2rem}
+.hub-actions{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;max-width:520px}
+.user-bar{position:absolute;top:12px;right:16px;left:16px;display:flex;justify-content:space-between;align-items:center;
+  font-size:.85rem;color:var(--muted);z-index:5}
+.user-bar strong{color:var(--gold-l);font-family:'Cinzel',serif}
+.badge-row{display:flex;gap:.35rem;flex-wrap:wrap;justify-content:center;margin:.6rem 0}
+
+/* MODE / FACTION / LOGIN panels */
+.panel-screen{justify-content:center;align-items:center;padding:1.2rem;
+  background:radial-gradient(ellipse at top,#1f1810,#0a0806)}
+.panel-card{background:var(--panel);border:2px solid #3a2e1f;border-radius:14px;padding:1.4rem;
+  max-width:640px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.panel-card h2{color:var(--gold);text-align:center;margin-bottom:1rem;letter-spacing:.12em;font-size:1.4rem}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:1rem}
+.mode-btn{background:var(--panel2);border:2px solid #3a2e1f;border-radius:10px;padding:1rem;color:var(--text);
+  text-align:left;transition:.2s}
+.mode-btn:hover,.mode-btn.on{border-color:var(--gold);background:#241c12}
+.mode-btn h3{color:var(--gold-l);font-size:.95rem;margin-bottom:.25rem}
+.mode-btn p{font-size:.8rem;color:var(--muted);font-family:'Crimson Text',serif}
+.diff-row{display:flex;gap:.5rem;justify-content:center;margin:.8rem 0;flex-wrap:wrap}
+.diff-btn{padding:.5rem 1rem;border:2px solid #3a2e1f;background:var(--panel2);color:var(--muted);border-radius:6px;font-size:.8rem}
+.diff-btn.on{border-color:var(--gold);color:var(--gold-l);background:#2a2210}
+.faction-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.7rem;margin:1rem 0}
+.faction-card{background:var(--panel2);border:2px solid #3a2e1f;border-radius:10px;overflow:hidden;cursor:pointer;transition:.25s;text-align:center}
+.faction-card:hover,.faction-card.on{border-color:var(--gold);transform:translateY(-3px);box-shadow:0 8px 24px rgba(212,175,55,.2)}
+.faction-card img{width:100%;height:120px;object-fit:cover;object-position:top;display:block}
+.faction-card .nm{padding:.45rem;font-size:.78rem;color:var(--gold-l);font-family:'Cinzel',serif}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:3px;vertical-align:middle;border:1px solid #fff4}
+input,select{width:100%;padding:.65rem .8rem;margin:.35rem 0 .7rem;background:#0d0a07;border:1px solid #3a2e1f;
+  border-radius:6px;color:var(--text);font-family:'Crimson Text',serif;font-size:1rem}
+input:focus{outline:none;border-color:var(--gold)}
+label.field{display:block;text-align:left;font-size:.8rem;color:var(--muted);font-family:'Cinzel',serif;letter-spacing:.06em}
+.form-hint{font-size:.8rem;color:var(--muted);margin-bottom:.8rem;text-align:center}
+.err{color:#e66;font-size:.85rem;min-height:1.2em;text-align:center}
+
+/* PROFILE / ACHIEVEMENTS */
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin:1rem 0}
+.stat-box{background:var(--panel2);border:1px solid #3a2e1f;border-radius:8px;padding:.7rem;text-align:center}
+.stat-box b{display:block;font-family:'Cinzel',serif;color:var(--gold);font-size:1.3rem}
+.stat-box span{font-size:.7rem;color:var(--muted)}
+.ach-list{max-height:280px;overflow-y:auto;text-align:left}
+.ach{display:flex;gap:.7rem;padding:.55rem;border-bottom:1px solid #2a2218;align-items:center}
+.ach.locked{opacity:.4}
+.ach .ico{font-size:1.4rem;width:2rem;text-align:center}
+.ach .tit{font-family:'Cinzel',serif;font-size:.8rem;color:var(--gold-l)}
+.ach .desc{font-size:.75rem;color:var(--muted)}
+
+/* GAME */
+#game-screen{flex-direction:row;height:100vh;overflow:hidden}
+.sidebar{width:240px;background:var(--panel);border-right:1px solid #3a2e1f;display:flex;flex-direction:column;
+  padding:.65rem;overflow-y:auto}
+.sidebar.right{border-right:none;border-left:1px solid #3a2e1f}
+.main{flex:1;display:flex;flex-direction:column;background:#0e0c09;min-width:0}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:.45rem .9rem;
+  background:linear-gradient(90deg,#14100c,#1c1610);border-bottom:1px solid #3a2e1f;gap:.5rem;flex-wrap:wrap}
+.pchip{display:flex;align-items:center;gap:.35rem;font-size:.8rem;padding:.25rem .5rem;border-radius:20px;
+  border:1px solid #3a2e1f;opacity:.55}
+.pchip.active{opacity:1;border-color:var(--gold);box-shadow:0 0 12px rgba(212,175,55,.25);animation:pulseGold 2s infinite}
+.pchip .c{width:12px;height:12px;border-radius:50%;border:1px solid #fff5}
+.turn-lbl{font-family:'Cinzel',serif;color:var(--gold);letter-spacing:.08em;font-size:.9rem}
+
+.board-wrap{flex:1;display:flex;justify-content:center;align-items:center;padding:.35rem;min-height:0;position:relative}
+#board{position:relative;width:min(540px,90vmin);height:min(540px,90vmin);border-radius:6px;overflow:hidden;
+  border:2px solid var(--gold-d);box-shadow:0 0 40px rgba(212,175,55,.2)}
+#board img.bg{width:100%;height:100%;object-fit:cover;display:block}
+#overlay{position:absolute;inset:0}
+.cell{position:absolute;width:5.5%;height:5.5%;border-radius:18%;border:1.5px solid transparent;
+  z-index:5;cursor:pointer;transition:.15s}
+.cell:hover,.cell.hl{border-color:var(--gold-l)!important;background:rgba(212,175,55,.22);box-shadow:0 0 12px rgba(212,175,55,.6)}
+.cell.power{box-shadow:inset 0 0 6px rgba(100,180,255,.4)}
+.cell.safe{border-color:rgba(255,220,100,.35)}
+.token{position:absolute;width:5.2%;height:5.2%;border-radius:50%;border:2px solid rgba(255,255,255,.55);
+  z-index:12;cursor:pointer;box-shadow:0 2px 8px #000a;transition:left .35s ease,top .35s ease,transform .2s}
+.token:hover{transform:scale(1.2);z-index:20}
+.token.sel{box-shadow:0 0 0 3px var(--gold-l),0 0 16px var(--gold);transform:scale(1.25);z-index:20}
+.token .s{position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);font-size:.5rem;background:#1a1005;
+  color:var(--gold);padding:0 2px;border-radius:3px;font-family:'Cinzel',serif;white-space:nowrap;pointer-events:none}
+
+.toast{position:absolute;top:10%;left:50%;transform:translateX(-50%) scale(.9);background:rgba(15,12,8,.96);
+  border:2px solid var(--gold);border-radius:10px;padding:.7rem 1.3rem;z-index:80;opacity:0;pointer-events:none;
+  transition:.35s;text-align:center;font-family:'Cinzel',serif;color:var(--gold-l);min-width:180px}
+.toast.show{opacity:1;transform:translateX(-50%) scale(1)}
+.toast .big{font-size:1.5rem;margin-bottom:.2rem}
+
+.controls{display:flex;justify-content:center;align-items:center;gap:.8rem;padding:.5rem;background:#14100c;
+  border-top:1px solid #3a2e1f;flex-wrap:wrap}
+.die{width:42px;height:42px;border-radius:9px;border:2px solid var(--gold-d);background:linear-gradient(145deg,#2a2218,#14100c);
+  display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:1.25rem;color:var(--gold)}
+.die.roll{animation:boardShake .35s infinite}
+.hand{display:flex;gap:.35rem;justify-content:center;flex-wrap:wrap;min-height:110px;padding:.3rem .4rem .5rem;overflow-x:auto}
+.card{width:74px;height:108px;border-radius:6px;overflow:hidden;border:2px solid #4a3c28;cursor:pointer;
+  position:relative;flex-shrink:0;transition:.25s cubic-bezier(.2,1.2,.3,1);animation:drawIn .4s ease;background:#1a140f}
+.card img{width:100%;height:100%;object-fit:cover}
+.card:hover{transform:translateY(-14px) scale(1.05);border-color:var(--gold);z-index:20;
+  box-shadow:0 12px 30px rgba(0,0,0,.5),0 0 20px rgba(212,175,55,.3)}
+.card .lb{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.94));
+  padding:.9rem .15rem .2rem;font-size:.5rem;text-align:center;color:var(--gold-l);font-family:'Cinzel',serif}
+
+.sec{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.1em;color:var(--gold);text-transform:uppercase;
+  margin:.45rem 0 .25rem;border-bottom:1px solid #3a2e1f;padding-bottom:.15rem}
+.log{flex:1;overflow-y:auto;font-size:.72rem;color:var(--muted);line-height:1.35;max-height:120px}
+.log div{margin-bottom:.25rem;padding-left:.3rem;border-left:2px solid #3a2e1f}
+.log .imp{color:var(--gold-l);border-left-color:var(--gold)}
+.row{display:flex;justify-content:space-between;font-size:.76rem;margin:.15rem 0}
+.row span:last-child{color:var(--gold);font-family:'Cinzel',serif;font-size:.7rem}
+.thumb{width:100%;max-height:88px;object-fit:cover;object-position:top;border-radius:6px;border:1px solid #3a2e1f;margin-bottom:.25rem}
+
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:1000;justify-content:center;align-items:center;padding:1rem}
+.modal.on{display:flex}
+.modal .box{background:var(--panel);border:2px solid var(--gold-d);border-radius:12px;padding:1.4rem;max-width:520px;
+  width:100%;max-height:90vh;overflow-y:auto;text-align:center;box-shadow:0 20px 60px #000}
+.modal .box h2{color:var(--gold);margin-bottom:.7rem}
+.modal .box p{color:#c9b89a;margin-bottom:.7rem;line-height:1.45}
+.share-row{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin:.8rem 0}
+
+@media(max-width:960px){
+  #game-screen{flex-direction:column;height:auto;min-height:100vh}
+  .sidebar{width:100%;max-height:140px;border:none;border-bottom:1px solid #3a2e1f}
+  .sidebar.right{order:3}
+  #board{width:min(360px,92vw);height:min(360px,92vw)}
+  .mode-grid{grid-template-columns:1fr}
+}
+
+/* Extra Gwent-inspired FX */
+.fx-vignette{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.55) 100%);opacity:0;transition:opacity .4s}
+.fx-vignette.on{opacity:1}
+.fx-nameplate{position:absolute;left:50%;top:22%;transform:translateX(-50%) translateY(-10px);opacity:0;
+  background:linear-gradient(90deg,transparent,rgba(20,15,8,.92),transparent);padding:.5rem 2.5rem;
+  font-family:'Cinzel',serif;letter-spacing:.25em;color:var(--gold-l);font-size:clamp(.9rem,2.5vw,1.2rem);
+  border-top:1px solid var(--gold-d);border-bottom:1px solid var(--gold-d);transition:.45s;white-space:nowrap;pointer-events:none}
+.fx-nameplate.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.str-pop{position:absolute;font-family:'Cinzel',serif;color:var(--gold-l);font-size:1.1rem;font-weight:700;
+  text-shadow:0 0 12px #000,0 0 8px var(--gold);pointer-events:none;z-index:100;animation:strPop .9s forwards}
+@keyframes strPop{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-28px) scale(1.3)}}
+.card.play-pulse{animation:cardPulse .4s ease}
+@keyframes cardPulse{0%{transform:scale(1)}50%{transform:scale(1.15) translateY(-20px)}100%{transform:scale(1)}}
+#board::after{content:'';position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 60px rgba(0,0,0,.35);z-index:3}
+.die.slam{animation:dieSlam .35s ease}
+@keyframes dieSlam{0%{transform:scale(.5) rotate(-20deg)}60%{transform:scale(1.15)}100%{transform:scale(1) rotate(0)}}
+
+
+/* Social / Cloud / MP / Clan */
+.tabs{display:flex;gap:.35rem;flex-wrap:wrap;justify-content:center;margin-bottom:.8rem}
+.tab{padding:.4rem .75rem;border:1px solid #3a2e1f;background:var(--panel2);color:var(--muted);
+  border-radius:6px;font-size:.72rem;letter-spacing:.06em}
+.tab.on{border-color:var(--gold);color:var(--gold-l);background:#2a2210}
+.lb-row{display:flex;align-items:center;gap:.6rem;padding:.45rem .5rem;border-bottom:1px solid #2a2218;
+  font-size:.85rem;text-align:left}
+.lb-row .rank{font-family:'Cinzel',serif;color:var(--gold);width:1.6rem;text-align:center}
+.lb-row .who{flex:1}
+.lb-row .score{font-family:'Cinzel',serif;color:var(--gold-l)}
+.lb-row.me{background:rgba(212,175,55,.08);border-left:2px solid var(--gold)}
+.clan-card{background:var(--panel2);border:1px solid #3a2e1f;border-radius:8px;padding:.7rem;margin:.4rem 0;text-align:left}
+.clan-card h4{font-family:'Cinzel',serif;color:var(--gold-l);font-size:.9rem}
+.clan-card p{font-size:.78rem;color:var(--muted);margin:.2rem 0}
+.room-code{font-family:'Cinzel',serif;font-size:1.6rem;letter-spacing:.3em;color:var(--gold);
+  background:#0d0a07;padding:.5rem 1rem;border-radius:8px;border:1px solid var(--gold-d);display:inline-block;margin:.5rem 0}
+.lobby-seat{display:flex;justify-content:space-between;align-items:center;padding:.4rem .5rem;border:1px solid #3a2e1f;
+  border-radius:6px;margin:.3rem 0;font-size:.85rem}
+.lobby-seat.filled{border-color:var(--gold-d);background:#1a1610}
+.sync-pill{display:inline-flex;align-items:center;gap:.3rem;font-size:.7rem;padding:.2rem .5rem;border-radius:20px;
+  border:1px solid #3a2e1f;color:var(--muted)}
+.sync-pill.ok{border-color:#4a8;color:#6c6}
+.sync-pill.pend{border-color:var(--gold-d);color:var(--gold)}
+.sound-toggle{position:absolute;top:12px;left:16px;z-index:6}
+.mini-list{max-height:220px;overflow-y:auto;text-align:left}
+
+
+/* solid screens fix */
+.screen{display:none!important;background:var(--bg);}
+.screen.active{display:flex!important;}
+.panel-screen.active{background:radial-gradient(ellipse at center,#1a140c 0%,#0a0806 70%);}
+.panel-card{box-shadow:0 12px 40px rgba(0,0,0,.65);background:#16120c!important;border-color:var(--gold-d)!important;}
+.mode-btn{background:#221c14!important;border-color:#5a4a2a!important;}
+.mode-btn h3{color:var(--gold-l)!important;}
+
+</style>
+</head>
+<body>
+<div class="fx-layer"><div class="fx-vignette" id="fx-vignette"></div><div class="fx-flash" id="fx-flash"></div><div class="fx-banner" id="fx-banner"></div><div class="fx-nameplate" id="fx-nameplate"></div></div>
+
+<!-- HUB -->
+<div id="hub-screen" class="screen active">
+  <div class="user-bar">
+    <span id="hub-user">Playing as <strong>Guest</strong></span>
+    <span>
+      <button class="btn btn-ghost btn-sm" id="btn-login-top" onclick="showScreen('login-screen')">Login</button>
+      <button class="btn btn-ghost btn-sm" onclick="showScreen('profile-screen')" id="btn-profile" style="display:none">Profile</button>
+    </span>
+  </div>
+  <img class="hero" src="assets/board/board.jpg" alt="Board">
+  <h1>LUDU</h1>
+  <div class="sub">Empires of the Gold Coast</div>
+  <p class="tag">Race for the Stool · Gwent-inspired tactics · Classic Ludu soul</p>
+  <button class="btn btn-ghost btn-sm sound-toggle" id="sound-btn" onclick="AudioFX.toggle()">Sound: On</button>
+  <div class="hub-actions">
+    <button class="btn" onclick="AudioFX.ui();showScreen('mode-screen')">Play</button>
+    <button class="btn" onclick="AudioFX.ui();showScreen('mp-screen')">Online Multiplayer</button>
+    <button class="btn btn-ghost" onclick="AudioFX.ui();showScreen('lb-screen')">Leaderboards</button>
+    <button class="btn btn-ghost" onclick="AudioFX.ui();showScreen('clan-screen')">Clans & Teams</button>
+    <button class="btn btn-ghost" onclick="AudioFX.ui();showScreen('cloud-screen')">Cloud Save</button>
+    <button class="btn btn-ghost" onclick="AudioFX.ui();showScreen('login-screen')">Login / Register</button>
+    <button class="btn btn-ghost" onclick="AudioFX.ui();showScreen('profile-screen')">Profile & Achievements</button>
+    <button class="btn btn-ghost" onclick="openModal('rules-modal')">How to Play</button>
+    <button class="btn btn-ghost" onclick="openModal('share-modal')">Share</button>
+  </div>
+  <div class="badge-row" id="hub-badges"></div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen" class="screen panel-screen">
+  <div class="panel-card">
+    <h2>Account</h2>
+    <p class="form-hint">Optional — play as guest anytime. Login unlocks saves, records, achievements & sharing identity.</p>
+    <div style="display:flex;gap:.5rem;justify-content:center;margin-bottom:.8rem">
+      <button class="btn btn-sm" id="tab-login" onclick="setAuthTab('login')">Login</button>
+      <button class="btn btn-ghost btn-sm" id="tab-reg" onclick="setAuthTab('reg')">Register</button>
+    </div>
+    <div id="auth-login">
+      <label class="field">Username</label>
+      <input id="login-user" autocomplete="username" placeholder="Your name">
+      <label class="field">Password</label>
+      <input id="login-pass" type="password" autocomplete="current-password" placeholder="Password">
+      <div class="err" id="login-err"></div>
+      <button class="btn" style="width:100%" onclick="doLogin()">Enter the Gold Coast</button>
+    </div>
+    <div id="auth-reg" style="display:none">
+      <label class="field">Username</label>
+      <input id="reg-user" placeholder="Choose a name">
+      <label class="field">Password</label>
+      <input id="reg-pass" type="password" placeholder="Min 4 characters">
+      <label class="field">Display name</label>
+      <input id="reg-display" placeholder="Shown on leaderboards">
+      <div class="err" id="reg-err"></div>
+      <button class="btn" style="width:100%" onclick="doRegister()">Create Account</button>
+    </div>
+    <button class="btn btn-ghost" style="width:100%;margin-top:.6rem" onclick="playAsGuest()">Continue as Guest</button>
+    <button class="btn btn-ghost" style="width:100%" onclick="showScreen('hub-screen')">Back</button>
+  </div>
+</div>
+
+<!-- MODE -->
+<div id="mode-screen" class="screen panel-screen">
+  <div class="panel-card">
+    <h2>Game Mode</h2>
+    <div class="mode-grid">
+      <button class="mode-btn on" id="mode-ai" onclick="setMode('ai')"><h3>Vs AI</h3><p>1 human + computer rivals. Pick difficulty.</p></button>
+      <button class="mode-btn" id="mode-hot" onclick="setMode('hotseat')"><h3>Hotseat</h3><p>2–4 players, one device. Pass & play.</p></button>
+    </div>
+    <div id="ai-opts">
+      <p style="text-align:center;color:var(--muted);font-size:.85rem;margin-bottom:.3rem">AI Difficulty</p>
+      <div class="diff-row">
+        <button class="diff-btn" data-d="easy" onclick="setDiff('easy')">Easy</button>
+        <button class="diff-btn on" data-d="normal" onclick="setDiff('normal')">Normal</button>
+        <button class="diff-btn" data-d="hard" onclick="setDiff('hard')">Hard</button>
+      </div>
+      <p style="text-align:center;color:var(--muted);font-size:.85rem">AI opponents (with you = total seats)</p>
+      <div class="diff-row">
+        <button class="diff-btn on" data-n="1" onclick="setAICount(1)">1 AI</button>
+        <button class="diff-btn" data-n="2" onclick="setAICount(2)">2 AI</button>
+        <button class="diff-btn" data-n="3" onclick="setAICount(3)">3 AI</button>
+      </div>
+    </div>
+    <div id="hot-opts" style="display:none">
+      <p style="text-align:center;color:var(--muted);font-size:.85rem">Players at the table</p>
+      <div class="diff-row">
+        <button class="diff-btn on" data-p="2" onclick="setHotCount(2)">2</button>
+        <button class="diff-btn" data-p="3" onclick="setHotCount(3)">3</button>
+        <button class="diff-btn" data-p="4" onclick="setHotCount(4)">4</button>
+      </div>
+    </div>
+    <button class="btn" style="width:100%;margin-top:.8rem" onclick="showScreen('faction-screen')">Choose Empires</button>
+    <button class="btn btn-ghost" style="width:100%" onclick="showScreen('hub-screen')">Back</button>
+  </div>
+</div>
+
+<!-- FACTION -->
+<div id="faction-screen" class="screen panel-screen">
+  <div class="panel-card" style="max-width:720px">
+    <h2 id="faction-title">Choose Your Empire</h2>
+    <p id="faction-hint" class="form-hint">Pick a faction for seat 1</p>
+    <div class="faction-grid" id="faction-grid"></div>
+    <div id="seat-summary" style="font-size:.85rem;color:var(--muted);margin:.5rem 0;text-align:left"></div>
+    <button class="btn" style="width:100%" id="begin-btn" onclick="beginGame()" disabled>Begin the Race</button>
+    <button class="btn btn-ghost" style="width:100%" onclick="showScreen('mode-screen')">Back</button>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div id="profile-screen" class="screen panel-screen">
+  <div class="panel-card">
+    <h2>Profile</h2>
+    <p id="prof-name" style="color:var(--gold-l);font-family:'Cinzel',serif"></p>
+    <div class="stat-grid">
+      <div class="stat-box"><b id="st-wins">0</b><span>Wins</span></div>
+      <div class="stat-box"><b id="st-losses">0</b><span>Losses</span></div>
+      <div class="stat-box"><b id="st-games">0</b><span>Games</span></div>
+      <div class="stat-box"><b id="st-caps">0</b><span>Captures</span></div>
+      <div class="stat-box"><b id="st-powers">0</b><span>Power-ups</span></div>
+      <div class="stat-box"><b id="st-ach">0</b><span>Achievements</span></div>
+    </div>
+    <h3 class="cinzel" style="color:var(--gold);font-size:.9rem;margin:1rem 0 .5rem;letter-spacing:.1em">ACHIEVEMENTS</h3>
+    <div class="ach-list" id="ach-list"></div>
+    <div class="share-row">
+      <button class="btn btn-sm" onclick="shareRecord()">Share Record</button>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+    </div>
+    <button class="btn btn-ghost" style="width:100%" onclick="showScreen('hub-screen')">Back</button>
+  </div>
+</div>
+
+
+<!-- CLOUD SAVE -->
+<div id="cloud-screen" class="screen panel-screen">
+  <div class="panel-card" style="max-width:560px">
+    <h2>Cloud Save</h2>
+    <p class="form-hint">Login required to sync. Prototype uses a local cloud vault (same browser) with the same API shape as a real backend — swap CloudAPI base URL later for production.</p>
+    <div style="text-align:center;margin:.5rem 0">
+      <span class="sync-pill" id="cloud-status">● Offline vault</span>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-box"><b id="cloud-rev">0</b><span>Revision</span></div>
+      <div class="stat-box"><b id="cloud-when">—</b><span>Last Sync</span></div>
+      <div class="stat-box"><b id="cloud-size">—</b><span>Payload</span></div>
+    </div>
+    <button class="btn" style="width:100%;margin-top:.5rem" onclick="CloudSave.push()">Upload to Cloud</button>
+    <button class="btn btn-ghost" style="width:100%" onclick="CloudSave.pull()">Download from Cloud</button>
+    <button class="btn btn-ghost" style="width:100%" onclick="CloudSave.autoToggle()" id="cloud-auto-btn">Auto-sync: Off</button>
+    <p id="cloud-msg" class="form-hint" style="margin-top:.6rem"></p>
+    <button class="btn btn-ghost" style="width:100%" onclick="showScreen('hub-screen')">Back</button>
+  </div>
+</div>
+
+<!-- LEADERBOARDS -->
+<div id="lb-screen" class="screen panel-screen">
+  <div class="panel-card" style="max-width:560px">
+    <h2>Leaderboards</h2>
+    <div class="tabs" id="lb-tabs">
+      <button class="tab on" data-lb="global" onclick="LB.show('global')">Global</button>
+      <button class="tab" data-lb="weekly" onclick="LB.show('weekly')">Weekly</button>
+      <button class="tab" data-lb="seasonal" onclick="LB.show('seasonal')">Seasonal</button>
+      <button class="tab" data-lb="friends" onclick="LB.show('friends')">Friends</button>
+      <button class="tab" data-lb="clans" onclick="LB.show('clans')">Clan Wars</button>
+      <button class="tab" data-lb="faction" onclick="LB.show('faction')">By Faction</button>
+    </div>
+    <p class="form-hint" id="lb-desc">All-time wins across the Gold Coast.</p>
+    <div class="mini-list" id="lb-list"></div>
+    <button class="btn" style="width:100%;margin-top:.7rem" onclick="LB.submitScore()">Submit My Score</button>
+    <button class="btn btn-ghost" style="width:100%" onclick="LB.addFriend()">Add Friend (local)</button>
+    <button class="btn btn-ghost" style="width:100%" onclick="showScreen('hub-screen')">Back</button>
+  </div>
+</div>
+
+<!-- CLANS -->
+<div id="clan-screen" class="screen panel-screen">
+  <div class="panel-card" style="max-width:560px">
+    <h2>Clans & Teams</h2>
+    <p class="form-hint">Create or join a clan. Clan trophies feed the Clan Wars leaderboard.</p>
+    <div id="clan-mine"></div>
+    <label class="field">Create clan name</label>
+    <input id="clan-name" placeholder="e.g. Golden Stool Guard">
+    <label class="field">Tag (3–5 letters)</label>
+    <input id="clan-tag" maxlength="5" placeholder="GSG">
+    <button class="btn" style="width:100%" onclick="Clans.create()">Create Clan</button>
+    <label class="field" style="margin-top:.8rem">Join by tag</label>
+    <input id="clan-join" placeholder="TAG">
+    <button class="btn btn-ghost" style="width:100%" onclick="Clans.join()">Join Clan</button>
+    <h3 class="cinzel" style="color:var(--gold);font-size:.85rem;margin:1rem 0 .4rem;letter-spacing:.1em">TOP CLANS</h3>
+    <div class="mini-list" id="clan-top"></div>
+    <button class="btn btn-ghost" style="width:100%;margin-top:.5rem" onclick="showScreen('hub-screen')">Back</button>
+  </div>
+</div>
+
+<!-- MULTIPLAYER -->
+<div id="mp-screen" class="screen panel-screen">
+  <div class="panel-card" style="max-width:560px">
+    <h2>Online Multiplayer</h2>
+    <p class="form-hint">Scaffolding for real-time play: rooms, seats, ready-check, and a socket-shaped NetAPI. This build simulates matchmaking locally; wire NetAPI.connect(url) to your server later.</p>
+    <div class="mode-grid">
+      <button class="mode-btn" onclick="MP.createRoom()"><h3>Create Room</h3><p>Host a private table. Share the code.</p></button>
+      <button class="mode-btn" onclick="document.getElementById('mp-join-box').style.display='block'"><h3>Join Room</h3><p>Enter a friend's room code.</p></button>
+    </div>
+    <div id="mp-join-box" style="display:none;margin:.5rem 0">
+      <input id="mp-code" placeholder="Room code e.g. STOOL" style="text-transform:uppercase">
+      <button class="btn" style="width:100%" onclick="MP.joinRoom()">Join</button>
+    </div>
+    <button class="btn btn-ghost" style="width:100%" onclick="MP.quickMatch()">Quick Match (simulated)</button>
+    <div id="mp-lobby" style="display:none;margin-top:1rem">
+      <p style="color:var(--muted);font-size:.8rem">Room code</p>
+      <div class="room-code" id="mp-room-code">----</div>
+      <div id="mp-seats"></div>
+      <label class="field">Your ready status</label>
+      <button class="btn" style="width:100%" id="mp-ready-btn" onclick="MP.toggleReady()">Ready</button>
+      <button class="btn btn-ghost" style="width:100%" onclick="MP.startIfReady()">Start When All Ready</button>
+      <button class="btn btn-ghost btn-danger" style="width:100%;margin-top:.4rem" onclick="MP.leave()">Leave Room</button>
+      <p class="form-hint" id="mp-net-status">NetAPI: simulated local bus</p>
+    </div>
+    <button class="btn btn-ghost" style="width:100%;margin-top:.6rem" onclick="showScreen('hub-screen')">Back</button>
+  </div>
+</div>
+
+
+<!-- GAME -->
+<div id="game-screen" class="screen">
+  <div class="sidebar">
+    <div class="sec">Table</div>
+    <div id="seat-list"></div>
+    <div class="sec">Your / Active Hand Note</div>
+    <div id="active-fx" style="font-size:.78rem;color:var(--muted)">No effects</div>
+    <div class="sec">Battle Log</div>
+    <div class="log" id="game-log"></div>
+    <button class="btn btn-ghost btn-sm" style="margin-top:auto;width:100%" onclick="openModal('rules-modal')">Rules</button>
+    <button class="btn btn-ghost btn-sm" style="width:100%" onclick="confirmQuit()">Quit</button>
+  </div>
+  <div class="main">
+    <div class="topbar" id="topbar"></div>
+    <div class="board-wrap">
+      <div id="board">
+        <img class="bg" src="assets/board/board.jpg" alt="">
+        <div id="overlay"></div>
+        <div class="toast" id="toast"><div class="big" id="toast-ico"></div><div id="toast-txt"></div></div>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="die" id="die1">?</div>
+      <div class="die" id="die2">?</div>
+      <button class="btn" id="roll-btn" onclick="rollDice()">Roll</button>
+      <button class="btn btn-ghost" id="end-btn" onclick="endTurn()" style="display:none">End Turn</button>
+      <button class="btn btn-ghost btn-sm" id="leader-btn" onclick="useLeader()">Leader</button>
+      <span id="moves-lbl" style="font-size:.78rem;color:var(--muted)"></span>
+    </div>
+    <div class="sec" style="text-align:center;border:none;margin:0;padding:.2rem">Hand — Gwent-style tactics cards</div>
+    <div class="hand" id="hand"></div>
+  </div>
+  <div class="sidebar right">
+    <div class="sec">Active Empire</div>
+    <div id="side-active"></div>
+    <div class="sec">Tokens</div>
+    <div id="side-tokens"></div>
+    <div class="sec">Power Legend</div>
+    <div style="font-size:.7rem;color:var(--muted);line-height:1.5">
+      🌪 Wind · 💧 Rain · 👁 Mist<br>🔥 Fire · 🥁 Drum · 🌿 Heal
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal" id="rules-modal"><div class="box" style="text-align:left">
+  <h2 style="text-align:center">How to Play</h2>
+  <p>Classic <strong>Ludu</strong> race on a four-empire board. Get all 4 tokens from your colored yard to the <strong>Golden Stool</strong>.</p>
+  <p>Roll → select token → advance. Capture weaker/equal foes. Land on power tiles. Play hand cards (Gwent-style). Leader once per game. Doubles = extra turn.</p>
+  <p><span style="color:#c9a227">■ Ashanti</span> · <span style="color:#3a7abd">■ Dagbon</span> · <span style="color:#0d9a9e">■ Fante</span> · <span style="color:#9b4d96">■ Ewe</span></p>
+  <div style="text-align:center"><button class="btn" onclick="closeModal('rules-modal')">Got it</button></div>
+</div></div>
+
+<div class="modal" id="share-modal"><div class="box">
+  <h2>Share LUDU</h2>
+  <p>Invite friends to race for the Golden Stool.</p>
+  <div class="share-row">
+    <button class="btn btn-sm" onclick="shareSocial('x')">X / Twitter</button>
+    <button class="btn btn-sm" onclick="shareSocial('fb')">Facebook</button>
+    <button class="btn btn-sm" onclick="shareSocial('wa')">WhatsApp</button>
+    <button class="btn btn-ghost btn-sm" onclick="shareNative()">System Share</button>
+  </div>
+  <button class="btn btn-ghost" onclick="closeModal('share-modal')">Close</button>
+</div></div>
+
+<div class="modal" id="win-modal"><div class="box">
+  <img id="win-img" src="assets/ui/victory.jpg" style="max-height:180px;border-radius:8px;border:1px solid #3a2e1f;margin-bottom:.6rem" alt="">
+  <h2 id="win-title">Victory!</h2>
+  <p id="win-text"></p>
+  <div class="share-row">
+    <button class="btn btn-sm" onclick="shareWin()">Share Victory</button>
+    <button class="btn" onclick="location.reload()">Menu</button>
+  </div>
+</div></div>
+
+<div class="modal" id="pass-modal"><div class="box">
+  <h2>Pass the Device</h2>
+  <p id="pass-text">Next player is ready.</p>
+  <button class="btn" onclick="closeModal('pass-modal')">I'm Ready</button>
+</div></div>
+
+<div class="modal" id="ach-modal"><div class="box">
+  <h2>Achievement Unlocked</h2>
+  <p id="ach-modal-txt" style="font-size:1.2rem;color:var(--gold-l)"></p>
+  <button class="btn" onclick="closeModal('ach-modal')">Glorious</button>
+</div></div>
+
+<script>
+/* ============ PATH ALIGNED TO BOARD ART ============
+   Board art layout (percent of board image):
+   TL blue Dagbon yard ~12-28%,12-28%
+   TR purple Ewe ~72-88%,12-28%
+   BL teal Fante ~12-28%,72-88%
+   BR gold Ashanti ~72-88%,72-88%
+   Center stool ~50%,50%
+   Paths: vertical/horizontal channels of the cross
+*/
+const FACTIONS = {
+  ashanti:{id:'ashanti',name:'Ashanti',leader:'Osei Tutu I',color:'#c9a227',corner:'BR',
+    img:'assets/leaders/Leader_Ashanti_Osei_Tutu_I.jpg',
+    ability:'All tokens +3 Str this turn',
+    // path entry index on shared ring + home stretch direction toward center from BR
+    entry:0},
+  fante:{id:'fante',name:'Fante',leader:'Nana Kobina Ansa',color:'#0d9a9e',corner:'BL',
+    img:'assets/leaders/Leader_Fante_Nana_Kobina_Ansa.jpg',
+    ability:'Draw 2 cards',entry:10},
+  dagbon:{id:'dagbon',name:'Dagbon',leader:'Naa Gbewaa',color:'#3a7abd',corner:'TL',
+    img:'assets/leaders/Leader_Dagbon_Naa_Gbewaa.jpg',
+    ability:'Advance one token +6',entry:20},
+  ewe:{id:'ewe',name:'Ewe',leader:'Togbui Sri',color:'#9b4d96',corner:'TR',
+    img:'assets/leaders/Leader_Ewe_Togbui_Sri.jpg',
+    ability:'Clear effects + bless yard',entry:30}
+};
+const FID_ORDER = ['ashanti','fante','dagbon','ewe'];
+
+// Calibrated ring path (40 cells) following cross arms — visual % matching board art channels
+const RING = (function(){
+  // Path cells as % of board image — calibrated to the stylized Ludu cross art
+  // Order: outer ring clockwise, 40 cells. Entry offsets: Ashanti=0, Fante=10, Dagbon=20, Ewe=30
+  // Bottom arm (outer, near BR gold yard) → left along bottom → left arm → top → right → back
+  const ringCoords = [
+    // 0-9  BOTTOM arm / lower channel (Ashanti entry zone) — gold-teal path under stool
+    [72,70],[68,74],[62,78],[56,80],[50,82],[44,80],[38,78],[32,74],[28,70],[30,66],
+    // 10-19 LEFT arm (Fante entry) — teal-blue channel
+    [28,60],[24,56],[20,52],[18,48],[18,44],[20,40],[24,36],[28,32],[32,28],[36,26],
+    // 20-29 TOP arm (Dagbon entry) — blue-purple channel
+    [40,22],[44,18],[50,16],[56,18],[60,22],[64,26],[68,30],[72,34],[74,38],[76,42],
+    // 30-39 RIGHT arm (Ewe entry) — purple-gold channel
+    [78,46],[80,50],[80,54],[78,58],[74,62],[70,66],[66,68],[62,68],[58,66],[54,64]
+  ];
+  const powers = {2:'wind',5:'heal',8:'rain',11:'fire',14:'mist',17:'drum',21:'wind',24:'heal',27:'rain',31:'fire',34:'mist',37:'drum'};
+  return ringCoords.map((c,i)=>({x:c[0],y:c[1], power:powers[i]||null, safe:(i%5===0)}));
+})();
+const TRACK_LEN = RING.length; // 40
+const HOME_LEN = 5;
+
+// Yard slots per faction (4 tokens) — match clover yards on art
+const YARD = {
+  ashanti:[{x:74,y:74},{x:82,y:74},{x:74,y:82},{x:82,y:82}],
+  fante:  [{x:18,y:74},{x:26,y:74},{x:18,y:82},{x:26,y:82}],
+  dagbon: [{x:18,y:18},{x:26,y:18},{x:18,y:26},{x:26,y:26}],
+  ewe:    [{x:74,y:18},{x:82,y:18},{x:74,y:26},{x:82,y:26}]
+};
+// Home stretch from colored arm into stool
+function homeXY(fid, step){ // step 0..HOME_LEN-1 — colored column into Golden Stool
+  const starts={ashanti:{x:62,y:62},fante:{x:38,y:62},dagbon:{x:38,y:38},ewe:{x:62,y:38}};
+  const s=starts[fid];
+  const t=(step+1)/(HOME_LEN+0.3);
+  return {x:s.x+(50-s.x)*t, y:s.y+(50-s.y)*t};
+}
+
+const POWERS = {
+  wind:{name:'Harmattan',ico:'🌪',desc:'Foes −1 on their next roll'},
+  rain:{name:'Monsoon',ico:'💧',desc:'This token protected'},
+  mist:{name:'Ancestral Mist',ico:'👁',desc:'Draw 1 · silence next foe'},
+  fire:{name:'Ancestral Fire',ico:'🔥',desc:'Strongest non-hero foe on ring → yard'},
+  drum:{name:'Talking Drum',ico:'🥁',desc:'Double this token Str'},
+  heal:{name:'Grove Heal',ico:'🌿',desc:'Yard token +3 Str'}
+};
+
+const CARDS = [
+  {id:'w1',name:'Harmattan',effect:'weather',img:'assets/cards/Weather_Harmattan_Winds.jpg'},
+  {id:'w2',name:'Monsoon',effect:'no_cap',img:'assets/cards/Weather_Monsoon_Deluge.jpg'},
+  {id:'w3',name:'Mist',effect:'silence',img:'assets/cards/Weather_Ancestral_Mist.jpg'},
+  {id:'w4',name:'Clear Skies',effect:'clear',img:'assets/cards/Weather_Clear_Skies.jpg'},
+  {id:'s1',name:'Shadow Courier',effect:'spy',img:'assets/cards/Spy_Shadow_Courier.jpg'},
+  {id:'s2',name:'Cowrie Whisper',effect:'discard',img:'assets/cards/Spy_Cowrie_Whisperer.jpg'},
+  {id:'m1',name:'Priestess',effect:'revive',img:'assets/cards/Medic_Priestess_of_the_Stool.jpg'},
+  {id:'m2',name:'Healer',effect:'boost',img:'assets/cards/Medic_Healer_of_the_Grove.jpg'},
+  {id:'x1',name:'Ancestral Fire',effect:'scorch',img:'assets/cards/Special_Ancestral_Fire_Scorch.jpg'},
+  {id:'x2',name:'Talking Drum',effect:'horn',img:'assets/cards/Special_Talking_Drum_of_Victory_Horn.jpg'},
+  {id:'x3',name:'War Elephant',effect:'elephant',img:'assets/cards/Special_War_Elephant_Charge.jpg'},
+  {id:'x4',name:'Sankofa',effect:'sankofa',img:'assets/cards/Utility_Sankofa_Return.jpg'},
+  {id:'x5',name:'Kente Bond',effect:'protect',img:'assets/cards/Special_Kente_Bond.jpg'},
+];
+
+const ACHIEVEMENTS = [
+  {id:'first_win',name:'Claim the Stool',desc:'Win your first game',ico:'👑'},
+  {id:'first_cap',name:'First Blood',desc:'Capture an enemy token',ico:'⚔️'},
+  {id:'power_3',name:'Spirit Touched',desc:'Trigger 3 board power-ups in one game',ico:'✨'},
+  {id:'hard_win',name:'Against the Odds',desc:'Win on Hard AI',ico:'🔥'},
+  {id:'hotseat',name:'Palaver',desc:'Finish a 3+ player hotseat game',ico:'🪑'},
+  {id:'all_home',name:'Full Court',desc:'Seat all 4 tokens on the Stool',ico:'🏆'},
+  {id:'scorch',name:'Ancestral Wrath',desc:'Play Ancestral Fire / Fire power',ico:'🌋'},
+  {id:'leader',name:'Royal Decree',desc:'Use a leader ability',ico:'📜'},
+  {id:'games_5',name:'Regular at Court',desc:'Play 5 games',ico:'🎲'},
+  {id:'win_streak_2',name:'Momentum',desc:'Win 2 games in a row',ico:'💫'},
+  {id:'share',name:'Herald',desc:'Share the game or a victory',ico:'📢'},
+  {id:'login',name:'Named Among Kings',desc:'Create or login to an account',ico:'🪪'},
+];
+
+/* ============ STORAGE / AUTH ============ */
+const Store = {
+  key:'ludu_gold_coast_v1',
+  load(){try{return JSON.parse(localStorage.getItem(this.key))||{users:{},session:null};}catch(e){return{users:{},session:null};}},
+  save(d){localStorage.setItem(this.key,JSON.stringify(d));},
+  data:null,
+  init(){this.data=this.load();},
+  user(){const s=this.data.session;return s?this.data.users[s]:null;},
+  ensureStats(u){
+    if(!u.stats) u.stats={wins:0,losses:0,games:0,captures:0,powers:0,streak:0};
+    if(!u.ach) u.ach=[];
+    return u;
+  }
+};
+Store.init();
+
+let meta = {
+  mode:'ai', // ai | hotseat
+  difficulty:'normal',
+  aiCount:1,
+  hotCount:2,
+  seats:[], // {factionId, isAI, name}
+  pickIndex:0,
+  picks:{}
+};
+
+let G = null; // live game state
+
+/* ============ UI NAV ============ */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id==='hub-screen') refreshHub();
+  if(id==='profile-screen') refreshProfile();
+  if(id==='faction-screen') renderFactionPick();
+  if(id==='mode-screen') syncModeUI();
+  if(id==='cloud-screen') CloudSave.refreshUI();
+  if(id==='lb-screen') LB.show(LB.current||'global');
+  if(id==='clan-screen') Clans.refresh();
+  if(id==='mp-screen') MP.refresh();
+}
+function openModal(id){document.getElementById(id).classList.add('on')}
+function closeModal(id){document.getElementById(id).classList.remove('on')}
+function refreshHub(){
+  const u=Store.user();
+  document.getElementById('hub-user').innerHTML = u
+    ? `Signed in as <strong>${u.display||u.user}</strong>`
+    : `Playing as <strong>Guest</strong>`;
+  document.getElementById('btn-login-top').style.display = u?'none':'inline-block';
+  document.getElementById('btn-profile').style.display = 'inline-block';
+  const badges=document.getElementById('hub-badges');
+  if(u){
+    Store.ensureStats(u);
+    badges.innerHTML = (u.ach||[]).slice(-5).map(id=>{
+      const a=ACHIEVEMENTS.find(x=>x.id===id);
+      return a?`<span title="${a.name}">${a.ico}</span>`:'';
+    }).join(' ');
+  } else badges.innerHTML='';
+}
+
+function setAuthTab(t){
+  document.getElementById('auth-login').style.display=t==='login'?'block':'none';
+  document.getElementById('auth-reg').style.display=t==='reg'?'block':'none';
+  document.getElementById('tab-login').className=t==='login'?'btn btn-sm':'btn btn-ghost btn-sm';
+  document.getElementById('tab-reg').className=t==='reg'?'btn btn-sm':'btn btn-ghost btn-sm';
+}
+function doRegister(){
+  const user=(document.getElementById('reg-user').value||'').trim().toLowerCase();
+  const pass=document.getElementById('reg-pass').value||'';
+  const display=(document.getElementById('reg-display').value||user).trim();
+  const err=document.getElementById('reg-err');
+  if(user.length<2){err.textContent='Username too short';return;}
+  if(pass.length<4){err.textContent='Password min 4 chars';return;}
+  if(Store.data.users[user]){err.textContent='Username taken';return;}
+  Store.data.users[user]=Store.ensureStats({user,pass,display,ach:['login'],stats:{wins:0,losses:0,games:0,captures:0,powers:0,streak:0}});
+  Store.data.session=user;
+  Store.save(Store.data);
+  err.textContent='';
+  fxBanner('Welcome, '+display);
+  unlockAch('login');
+  showScreen('hub-screen');
+}
+function doLogin(){
+  const user=(document.getElementById('login-user').value||'').trim().toLowerCase();
+  const pass=document.getElementById('login-pass').value||'';
+  const err=document.getElementById('login-err');
+  const u=Store.data.users[user];
+  if(!u||u.pass!==pass){err.textContent='Invalid credentials';return;}
+  Store.data.session=user;
+  Store.save(Store.data);
+  err.textContent='';
+  unlockAch('login');
+  showScreen('hub-screen');
+}
+function playAsGuest(){
+  Store.data.session=null;
+  Store.save(Store.data);
+  showScreen('hub-screen');
+}
+function logout(){
+  Store.data.session=null;
+  Store.save(Store.data);
+  showScreen('hub-screen');
+}
+
+function refreshProfile(){
+  let u=Store.user();
+  if(!u){
+    // guest ephemeral view
+    document.getElementById('prof-name').textContent='Guest — login to save progress';
+    ['st-wins','st-losses','st-games','st-caps','st-powers','st-ach'].forEach(id=>document.getElementById(id).textContent='—');
+  } else {
+    Store.ensureStats(u);
+    document.getElementById('prof-name').textContent=u.display||u.user;
+    document.getElementById('st-wins').textContent=u.stats.wins;
+    document.getElementById('st-losses').textContent=u.stats.losses;
+    document.getElementById('st-games').textContent=u.stats.games;
+    document.getElementById('st-caps').textContent=u.stats.captures;
+    document.getElementById('st-powers').textContent=u.stats.powers;
+    document.getElementById('st-ach').textContent=(u.ach||[]).length;
+  }
+  const list=document.getElementById('ach-list');
+  const have=new Set((u&&u.ach)||[]);
+  list.innerHTML=ACHIEVEMENTS.map(a=>`
+    <div class="ach ${have.has(a.id)?'':'locked'}">
+      <div class="ico">${a.ico}</div>
+      <div><div class="tit">${a.name}</div><div class="desc">${a.desc}</div></div>
+    </div>`).join('');
+}
+
+function unlockAch(id){
+  const u=Store.user();
+  if(!u) return;
+  Store.ensureStats(u);
+  if(u.ach.includes(id)) return;
+  u.ach.push(id);
+  Store.save(Store.data);
+  const a=ACHIEVEMENTS.find(x=>x.id===id);
+  if(a){
+    document.getElementById('ach-modal-txt').textContent=`${a.ico} ${a.name}`;
+    openModal('ach-modal');
+    fxBanner(a.name); AudioFX.ach();
+  }
+}
+
+/* ============ MODE / FACTION SETUP ============ */
+function setMode(m){
+  meta.mode=m;
+  document.getElementById('mode-ai').classList.toggle('on',m==='ai');
+  document.getElementById('mode-hot').classList.toggle('on',m==='hotseat');
+  document.getElementById('ai-opts').style.display=m==='ai'?'block':'none';
+  document.getElementById('hot-opts').style.display=m==='hotseat'?'block':'none';
+}
+function setDiff(d){
+  meta.difficulty=d;
+  document.querySelectorAll('.diff-btn[data-d]').forEach(b=>b.classList.toggle('on',b.dataset.d===d));
+}
+function setAICount(n){
+  meta.aiCount=n;
+  document.querySelectorAll('.diff-btn[data-n]').forEach(b=>b.classList.toggle('on',+b.dataset.n===n));
+}
+function setHotCount(n){
+  meta.hotCount=n;
+  document.querySelectorAll('.diff-btn[data-p]').forEach(b=>b.classList.toggle('on',+b.dataset.p===n));
+}
+function syncModeUI(){setMode(meta.mode);setDiff(meta.difficulty);}
+
+function seatsNeeded(){
+  if(meta.mode==='ai') return 1+meta.aiCount;
+  return meta.hotCount;
+}
+function renderFactionPick(){
+  meta.pickIndex=0; meta.picks={};
+  updateFactionPickUI();
+}
+function updateFactionPickUI(){
+  const need=seatsNeeded();
+  const humanSeats = meta.mode==='hotseat' ? need : 1;
+  const pickingHuman = meta.pickIndex < humanSeats;
+  document.getElementById('faction-title').textContent = pickingHuman
+    ? `Player ${meta.pickIndex+1} — Choose Empire`
+    : 'Confirm Table';
+  document.getElementById('faction-hint').textContent = pickingHuman
+    ? `Seat ${meta.pickIndex+1} of ${humanSeats}${meta.mode==='ai'?' (you)':''}`
+    : 'AI will fill remaining empires';
+  const taken=Object.values(meta.picks);
+  document.getElementById('faction-grid').innerHTML=FID_ORDER.map(id=>{
+    const f=FACTIONS[id];
+    const used=taken.includes(id);
+    return `<div class="faction-card ${used?'on':''}" style="opacity:${used&&pickingHuman?0.45:1}" onclick="pickFaction('${id}')">
+      <img src="${f.img}" alt=""><div class="nm"><span class="dot" style="background:${f.color}"></span>${f.name}</div></div>`;
+  }).join('');
+  const lines=[];
+  for(let i=0;i<Object.keys(meta.picks).length;i++){
+    const fid=meta.picks[i];
+    if(fid) lines.push(`Seat ${i+1}: ${FACTIONS[fid].name}`);
+  }
+  document.getElementById('seat-summary').innerHTML=lines.join('<br>')||'No seats chosen yet';
+  document.getElementById('begin-btn').disabled = Object.keys(meta.picks).length < humanSeats;
+}
+function pickFaction(id){
+  const need=seatsNeeded();
+  const humanSeats = meta.mode==='hotseat' ? need : 1;
+  if(meta.pickIndex >= humanSeats) return;
+  if(Object.values(meta.picks).includes(id)) return;
+  meta.picks[meta.pickIndex]=id;
+  meta.pickIndex++;
+  if(meta.pickIndex < humanSeats) updateFactionPickUI();
+  else {
+    // auto-assign AI factions
+    if(meta.mode==='ai'){
+      const left=FID_ORDER.filter(f=>!Object.values(meta.picks).includes(f));
+      for(let i=0;i<meta.aiCount;i++){
+        meta.picks[1+i]=left[i];
+      }
+    }
+    updateFactionPickUI();
+  }
+}
+
+function beginGame(){
+  const need=seatsNeeded();
+  const seats=[];
+  for(let i=0;i<need;i++){
+    const fid=meta.picks[i];
+    if(!fid){alert('Pick all human factions');return;}
+    const isAI = meta.mode==='ai' ? i>0 : false;
+    const u=Store.user();
+    seats.push({
+      factionId:fid,
+      isAI,
+      name: isAI ? `AI ${FACTIONS[fid].name}` : (meta.mode==='hotseat' ? `Player ${i+1}` : (u?(u.display||u.user):'You')),
+      difficulty: meta.difficulty
+    });
+  }
+  initGame(seats);
+  showScreen('game-screen');
+}
+
+/* ============ GAME CORE ============ */
+function mkDeck(){
+  let d=[]; CARDS.forEach(c=>{d.push({...c});d.push({...c});});
+  for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}
+  return d;
+}
+function draw(pl,n=1){
+  for(let k=0;k<n;k++){
+    if(!pl.deck.length){pl.deck=pl.discard;pl.discard=[];}
+    if(pl.deck.length && pl.hand.length<7) pl.hand.push(pl.deck.pop());
+  }
+}
+
+function initGame(seats){
+  G={
+    seats:seats.map((s,idx)=>{
+      const f=FACTIONS[s.factionId];
+      const pl={
+        idx, isAI:s.isAI, name:s.name, difficulty:s.difficulty||'normal',
+        faction:f, leaderUsed:false,
+        tokens:[0,1,2,3].map(i=>({id:i,str:[5,7,9,12][i],hero:i===3,pos:'yard',track:null,home:null,temp:0,prot:false})),
+        hand:[], deck:mkDeck(), discard:[],
+        movePenalty:0, silenced:false,
+        stats:{caps:0,powers:0}
+      };
+      draw(pl,5);
+      return pl;
+    }),
+    turn:0,
+    dice:[0,0], rolled:false, moves:[], sel:null,
+    noCap:false, log:[],
+    powersThisGame:0,
+    over:false
+  };
+  buildBoard();
+  updateAll();
+  log(`Table set: ${G.seats.map(s=>s.name).join(' · ')}`,true);
+  fxBanner('RACE FOR THE STOOL');
+  AudioFX.turn();
+  setTimeout(()=>fxNameplate(cur().name.toUpperCase()+' · '+cur().faction.name.toUpperCase()),900);
+  maybePassDevice();
+}
+
+function log(msg,imp){
+  G.log.unshift({msg,imp:!!imp});
+  if(G.log.length>60) G.log.pop();
+  const el=document.getElementById('game-log');
+  if(el) el.innerHTML=G.log.map(e=>`<div class="${e.imp?'imp':''}">${e.msg}</div>`).join('');
+}
+function fxFlash(){const f=document.getElementById('fx-flash');f.classList.add('on');setTimeout(()=>f.classList.remove('on'),150);}
+function fxBanner(t){
+  const b=document.getElementById('fx-banner');b.textContent=t;b.classList.add('show');
+  const v=document.getElementById('fx-vignette'); if(v){v.classList.add('on'); setTimeout(()=>v.classList.remove('on'),900);}
+  setTimeout(()=>b.classList.remove('show'),1600);
+}
+function fxNameplate(t){
+  const n=document.getElementById('fx-nameplate'); if(!n) return;
+  n.textContent=t; n.classList.add('show');
+  setTimeout(()=>n.classList.remove('show'),1400);
+}
+function fxStrPop(xPct,yPct,txt){
+  const board=document.getElementById('board'); if(!board) return;
+  const el=document.createElement('div'); el.className='str-pop'; el.textContent=txt;
+  el.style.left=xPct+'%'; el.style.top=yPct+'%';
+  board.appendChild(el); setTimeout(()=>el.remove(),900);
+}
+function toast(ico,txt){
+  document.getElementById('toast-ico').textContent=ico;
+  document.getElementById('toast-txt').textContent=txt;
+  const t=document.getElementById('toast');t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+function shakeBoard(){const b=document.getElementById('board');b.classList.remove('shake');void b.offsetWidth;b.classList.add('shake');}
+
+function absTrack(pl, trackPos){
+  return ((pl.faction.entry + trackPos) % TRACK_LEN + TRACK_LEN) % TRACK_LEN;
+}
+function tokenXY(pl,tok){
+  if(tok.pos==='done') return {x:50,y:50};
+  if(tok.pos==='yard') return YARD[pl.faction.id][tok.id];
+  if(tok.pos==='home') return homeXY(pl.faction.id, tok.home||0);
+  const a=absTrack(pl, tok.track||0);
+  return {x:RING[a].x, y:RING[a].y};
+}
+
+function buildBoard(){
+  const ov=document.getElementById('overlay'); ov.innerHTML='';
+  RING.forEach((c,i)=>{
+    const d=document.createElement('div');
+    d.className='cell'+(c.power?' power':'')+(c.safe?' safe':'');
+    d.style.left=`calc(${c.x}% - 2.75%)`; d.style.top=`calc(${c.y}% - 2.75%)`;
+    d.title=c.power?POWERS[c.power].name:(c.safe?'Safe':'Path '+i);
+    d.onclick=()=>{ if(G&&G.sel!=null) advanceSelected(); };
+    ov.appendChild(d);
+  });
+  renderTokens();
+}
+function renderTokens(){
+  document.querySelectorAll('.token').forEach(t=>t.remove());
+  const ov=document.getElementById('overlay');
+  G.seats.forEach(pl=>{
+    pl.tokens.forEach(tok=>{
+      const xy=tokenXY(pl,tok);
+      const el=document.createElement('div');
+      el.className='token'+(G.sel===pl.idx+'-'+tok.id?' sel':'');
+      el.style.background=pl.faction.color;
+      el.style.left=`calc(${xy.x}% - 2.6%)`;
+      el.style.top=`calc(${xy.y}% - 2.6%)`;
+      const str=tok.str+(tok.temp||0);
+      el.innerHTML=`<span class="s">${str}${tok.hero?'★':''}</span>`;
+      el.onclick=e=>{e.stopPropagation();onTok(pl.idx,tok.id);};
+      ov.appendChild(el);
+    });
+  });
+}
+
+function cur(){return G.seats[G.turn];}
+function onTok(pi,ti){
+  if(G.over) return;
+  const pl=G.seats[pi];
+  if(pi!==G.turn || pl.isAI) return;
+  if(!G.rolled && !G.moves.length){log('Roll first');return;}
+  const key=pi+'-'+ti;
+  if(G.sel===key) advanceSelected();
+  else {G.sel=key; renderTokens(); log(`${pl.name}: token ${ti+1} selected`);}
+}
+
+function advanceSelected(){
+  if(G.sel==null||!G.moves.length) return;
+  const [pi,ti]=G.sel.split('-').map(Number);
+  if(pi!==G.turn) return;
+  moveToken(pi,ti,G.moves.shift());
+  G.sel=null;
+  updateAll();
+}
+
+function moveToken(pi,ti,steps){
+  const pl=G.seats[pi];
+  const tok=pl.tokens[ti];
+  if(pl.movePenalty){steps=Math.max(1,steps-pl.movePenalty);}
+  if(tok.pos==='yard'){
+    tok.pos='track'; tok.track=0;
+    log(`${pl.name} token ${ti+1} leaves yard!`,true);
+    fxFlash(); AudioFX.move();
+  } else if(tok.pos==='track'){
+    tok.track=(tok.track||0)+steps;
+    if(tok.track>=TRACK_LEN){
+      tok.pos='home'; tok.home=Math.min(tok.track-TRACK_LEN, HOME_LEN-1); tok.track=null;
+      log(`${pl.name} enters final path`);
+    } else {
+      const a=absTrack(pl,tok.track);
+      const cell=RING[a];
+      if(cell.safe) tok.prot=true;
+      if(cell.power) triggerPower(pl,tok,cell.power);
+      checkCap(pl,tok);
+    }
+  } else if(tok.pos==='home'){
+    tok.home=(tok.home||0)+1;
+    if(tok.home>=HOME_LEN){
+      tok.pos='done';
+      log(`${pl.name} token reaches the Golden Stool!`,true);
+      fxBanner('STOOL CLAIMED');
+      fxFlash(); shakeBoard();
+      checkWin(pl);
+    }
+  }
+  // hop anim
+  setTimeout(()=>{
+    renderTokens();
+    document.querySelectorAll('.token').forEach(el=>{
+      // lightweight: all tokens re-rendered
+    });
+  },10);
+  renderTokens();
+  const els=document.querySelectorAll('.token');
+  els.forEach(el=>el.classList.add('hop'));
+}
+
+function triggerPower(pl,tok,key){
+  const P=POWERS[key];
+  toast(P.ico, P.name+' — '+P.desc);
+  log(`⚡ ${P.name}: ${P.desc}`,true);
+  fxFlash(); AudioFX.power();
+  pl.stats.powers++;
+  G.powersThisGame++;
+  if(G.powersThisGame>=3) unlockAch('power_3');
+  const others=G.seats.filter(s=>s.idx!==pl.idx);
+  switch(key){
+    case 'wind': others.forEach(o=>o.movePenalty=1); document.getElementById('active-fx').textContent='Wind: foes −1 next'; break;
+    case 'rain': tok.prot=true; G.noCap=true; break;
+    case 'mist': draw(pl,1); others.forEach(o=>o.silenced=true); break;
+    case 'fire':{
+      let best=null,hs=-1,bp=null;
+      others.forEach(o=>o.tokens.forEach(t=>{
+        if(t.pos==='track'&&!t.hero){const s=t.str+(t.temp||0);if(s>hs){hs=s;best=t;bp=o;}}
+      }));
+      if(best){best.pos='yard';best.track=null;best.home=null;log(`Fire banished Str ${hs}!`,true);shakeBoard();unlockAch('scorch');}
+      break;
+    }
+    case 'drum': tok.temp=(tok.temp||0)+tok.str; {const xy=tokenXY(pl,tok); fxStrPop(xy.x,xy.y,'×2');} break;
+    case 'heal':{
+      const y=pl.tokens.find(t=>t.pos==='yard');
+      if(y) y.temp=(y.temp||0)+3; else tok.temp=(tok.temp||0)+2;
+      break;
+    }
+  }
+  bumpStat('powers',1);
+}
+
+function checkCap(pl,tok){
+  if(G.noCap||tok.pos!=='track') return;
+  const a=absTrack(pl,tok.track||0);
+  const str=tok.str+(tok.temp||0);
+  G.seats.forEach(op=>{
+    if(op.idx===pl.idx) return;
+    op.tokens.forEach(ot=>{
+      if(ot.pos!=='track'||ot.prot) return;
+      if(absTrack(op,ot.track||0)===a){
+        const os=ot.str+(ot.temp||0);
+        if(str>=os){
+          ot.pos='yard';ot.track=null;ot.home=null;ot.prot=false;
+          pl.stats.caps++; log(`${pl.name} captured foe (Str ${os})!`,true);
+          shakeBoard(); fxFlash(); AudioFX.capture(); bumpStat('captures',1); unlockAch('first_cap');
+        } else {
+          tok.pos='yard';tok.track=null;tok.home=null;
+          log(`${pl.name} token captured!`,true); shakeBoard();
+        }
+      }
+    });
+  });
+}
+
+function checkWin(pl){
+  if(!pl.tokens.every(t=>t.pos==='done')) return;
+  G.over=true;
+  unlockAch('all_home');
+  const humanWin = !pl.isAI && (meta.mode==='hotseat' || pl.idx===0);
+  if(meta.mode==='hotseat' && G.seats.length>=3) unlockAch('hotseat');
+  if(humanWin && meta.mode==='ai' && meta.difficulty==='hard') unlockAch('hard_win');
+  recordResult(pl);
+  document.getElementById('win-title').textContent = pl.isAI ? 'Defeat' : 'Victory!';
+  document.getElementById('win-text').textContent = `${pl.name} (${pl.faction.name}) claimed the Golden Stool!`;
+  document.getElementById('win-img').src = pl.isAI ? 'assets/board/board.jpg' : 'assets/ui/victory.jpg';
+  fxBanner(pl.isAI?'DEFEAT':'VICTORY');
+  if(pl.isAI) AudioFX.lose(); else AudioFX.win();
+  CloudSave.maybeAuto();
+  openModal('win-modal');
+}
+
+function bumpStat(k,n){
+  const u=Store.user(); if(!u) return;
+  Store.ensureStats(u); u.stats[k]=(u.stats[k]||0)+n; Store.save(Store.data);
+}
+function recordResult(winner){
+  const u=Store.user(); if(!u) return;
+  Store.ensureStats(u);
+  u.stats.games++;
+  const you=G.seats.find(s=>!s.isAI && s.idx===0);
+  // count human wins for seated player 0 in AI mode, or any non-AI winner in hotseat if session user played seat0 only tracked simply
+  if(meta.mode==='ai'){
+    if(winner.idx===0 && !winner.isAI){u.stats.wins++; u.stats.streak=(u.stats.streak||0)+1; unlockAch('first_win'); if(u.stats.streak>=2) unlockAch('win_streak_2');}
+    else if(!winner.isAI===false && winner.idx!==0){/*ai won*/ u.stats.losses++; u.stats.streak=0;}
+    else if(winner.isAI){u.stats.losses++; u.stats.streak=0;}
+  } else {
+    // hotseat: award win to account only if winner was seat named with account - seat0 preferred
+    if(winner.idx===0){u.stats.wins++; unlockAch('first_win');}
+    u.stats.games=Math.max(u.stats.games,1);
+  }
+  if(u.stats.games>=5) unlockAch('games_5');
+  Store.save(Store.data);
+  CloudSave.maybeAuto();
+}
+
+/* cards / leader / dice */
+function rollDice(){
+  const pl=cur();
+  if(pl.isAI||G.over||(G.rolled&&G.moves.length)) return;
+  const d1=document.getElementById('die1'),d2=document.getElementById('die2');
+  d1.classList.add('roll');d2.classList.add('roll');
+  document.getElementById('roll-btn').disabled=true;
+  AudioFX.dice();
+  setTimeout(()=>{
+    let a=1+Math.floor(Math.random()*6),b=1+Math.floor(Math.random()*6);
+    G.dice=[a,b]; d1.textContent=a;d2.textContent=b;
+    d1.classList.remove('roll');d2.classList.remove('roll');
+    d1.classList.add('slam');d2.classList.add('slam');
+    setTimeout(()=>{d1.classList.remove('slam');d2.classList.remove('slam');},350);
+    G.rolled=true;
+    let moves=[a,b];
+    if(pl.movePenalty){moves=moves.map(m=>Math.max(1,m-pl.movePenalty));}
+    G.moves=moves;
+    if(a===b) log('Doubles! Extra turn after.',true);
+    log(`${pl.name} rolled ${a}+${b}`);
+    document.getElementById('end-btn').style.display='inline-block';
+    updateAll();
+  },450);
+}
+
+function playCard(i){
+  const pl=cur();
+  if(pl.isAI||G.over||pl.silenced){if(pl.silenced)log('Silenced!');return;}
+  const c=pl.hand[i]; if(!c) return;
+  // Gwent-like fly animation
+  cardFly(c.img); AudioFX.card();
+  pl.hand.splice(i,1); pl.discard.push(c);
+  applyCard(pl,c);
+  updateAll(); renderTokens();
+}
+function cardFly(src){
+  const el=document.createElement('div'); el.className='card-fly';
+  el.innerHTML=`<img src="${src}" style="width:100%;height:100%;object-fit:cover">`;
+  el.style.left='50%'; el.style.top='70%'; el.style.transform='translate(-50%,-50%) scale(.5)';
+  document.body.appendChild(el);
+  requestAnimationFrame(()=>{el.style.transform='translate(-50%,-120%) scale(1.1)';el.style.opacity='0';});
+  setTimeout(()=>el.remove(),600);
+  fxFlash();
+}
+function applyCard(pl,c){
+  log(`Card — ${c.name}`,true);
+  const foes=G.seats.filter(s=>s.idx!==pl.idx);
+  switch(c.effect){
+    case 'weather': foes.forEach(f=>f.movePenalty=1); break;
+    case 'no_cap': G.noCap=true; break;
+    case 'silence': foes.forEach(f=>f.silenced=true); break;
+    case 'clear': G.noCap=false; G.seats.forEach(s=>s.movePenalty=0); document.getElementById('active-fx').textContent='Clear skies'; break;
+    case 'spy': draw(pl,1); break;
+    case 'discard': foes.forEach(f=>{if(f.hand.length){const i=Math.floor(Math.random()*f.hand.length);f.discard.push(f.hand.splice(i,1)[0]);}}); break;
+    case 'revive':{const t=pl.tokens.find(t=>t.pos==='yard'); if(t) t.temp=(t.temp||0)+2; break;}
+    case 'boost':{const t=pl.tokens.find(t=>t.pos!=='done')||pl.tokens[0]; t.temp=(t.temp||0)+4; break;}
+    case 'scorch':{
+      let best=null,hs=-1;
+      foes.forEach(f=>f.tokens.forEach(t=>{if(t.pos==='track'&&!t.hero){const s=t.str+(t.temp||0);if(s>hs){hs=s;best=t;}}}));
+      if(best){best.pos='yard';best.track=null;unlockAch('scorch');shakeBoard();}
+      break;
+    }
+    case 'horn':{const t=pl.tokens.find(t=>t.pos!=='done')||pl.tokens[0]; t.temp=(t.temp||0)+t.str; break;}
+    case 'elephant':{const t=pl.tokens.find(t=>t.pos!=='done')||pl.tokens[0]; t.temp=(t.temp||0)+5; break;}
+    case 'sankofa':{
+      let t=pl.tokens.find(t=>t.pos==='track')||pl.tokens.find(t=>t.pos==='yard');
+      if(t){if(t.pos==='yard'){t.pos='track';t.track=2;} else t.track=(t.track||0)+3;}
+      break;
+    }
+    case 'protect': G.noCap=true; break;
+  }
+}
+function useLeader(){
+  const pl=cur();
+  if(pl.isAI||pl.leaderUsed||G.over) return;
+  pl.leaderUsed=true;
+  log(`LEADER — ${pl.faction.leader}!`,true);
+  fxBanner(pl.faction.leader.toUpperCase()); fxNameplate('LEADER ABILITY'); fxFlash();
+  unlockAch('leader');
+  switch(pl.faction.id){
+    case 'ashanti': pl.tokens.forEach(t=>t.temp=(t.temp||0)+3); break;
+    case 'dagbon':{
+      const t=pl.tokens.find(t=>t.pos==='track')||pl.tokens.find(t=>t.pos==='yard');
+      if(t){if(t.pos==='yard'){t.pos='track';t.track=0;} t.track=(t.track||0)+6;}
+      break;
+    }
+    case 'fante': draw(pl,2); break;
+    case 'ewe':
+      G.noCap=false; G.seats.forEach(s=>{s.movePenalty=0;s.silenced=false;});
+      pl.tokens.filter(t=>t.pos==='yard').forEach(t=>t.temp=(t.temp||0)+2);
+      break;
+  }
+  updateAll(); renderTokens();
+}
+
+function endTurn(){
+  if(G.over) return;
+  const pl=cur();
+  const doubles=G.dice[0]===G.dice[1]&&G.dice[0]>0;
+  pl.tokens.forEach(t=>{t.temp=0;t.prot=false;});
+  pl.movePenalty=0;
+  G.noCap=false; G.rolled=false; G.moves=[]; G.sel=null;
+  document.getElementById('die1').textContent='?';
+  document.getElementById('die2').textContent='?';
+  document.getElementById('end-btn').style.display='none';
+  document.getElementById('roll-btn').disabled=false;
+
+  if(doubles && !pl.isAI){log('Doubles — go again!',true); draw(pl,1); updateAll(); return;}
+  if(doubles && pl.isAI){log('AI doubles!'); updateAll(); setTimeout(()=>aiPlay(),500); return;}
+
+  // next seat
+  G.seats[G.turn].silenced=false;
+  G.turn=(G.turn+1)%G.seats.length;
+  log(`— ${cur().name}'s turn —`,true);
+  fxNameplate(cur().name.toUpperCase()+' · '+cur().faction.name.toUpperCase());
+  updateAll();
+  maybePassDevice();
+  if(cur().isAI) setTimeout(()=>aiPlay(),700);
+  else draw(cur(),1);
+}
+
+function maybePassDevice(){
+  const pl=cur();
+  if(meta.mode==='hotseat' && !pl.isAI){
+    document.getElementById('pass-text').textContent=`Pass the device to ${pl.name} (${pl.faction.name}).`;
+    openModal('pass-modal');
+  }
+}
+
+/* ============ AI (easy / normal / hard) ============ */
+function aiPlay(){
+  if(G.over||!cur().isAI) return;
+  const pl=cur();
+  const diff=pl.difficulty||meta.difficulty;
+
+  // card play
+  if(pl.hand.length && !pl.silenced){
+    const playChance = diff==='easy'?0.25:diff==='hard'?0.7:0.45;
+    if(Math.random()<playChance){
+      let idx=0;
+      if(diff==='hard'){
+        const prio=['scorch','horn','elephant','weather','boost','sankofa','spy','revive','protect','discard'];
+        // if any foe near home stretch prefer scorch/weather
+        const threat=G.seats.some(s=>s.idx!==pl.idx&&s.tokens.some(t=>t.pos==='home'||(t.pos==='track'&&(t.track||0)>TRACK_LEN-8)));
+        const order=threat?['scorch','weather','no_cap','horn',...prio]:prio;
+        idx=pl.hand.findIndex(c=>order.includes(c.effect));
+        if(idx<0) idx=Math.floor(Math.random()*pl.hand.length);
+      } else if(diff==='normal'){
+        const prio=['scorch','horn','boost','spy','sankofa'];
+        idx=pl.hand.findIndex(c=>prio.includes(c.effect));
+        if(idx<0) idx=Math.floor(Math.random()*pl.hand.length);
+      } else idx=Math.floor(Math.random()*pl.hand.length);
+      const c=pl.hand.splice(idx,1)[0]; pl.discard.push(c); applyCard(pl,c);
+    }
+  }
+  // leader hard only sometimes
+  if(diff==='hard' && !pl.leaderUsed && Math.random()<0.35){
+    pl.leaderUsed=true;
+    // simplified leader
+    if(pl.faction.id==='ashanti') pl.tokens.forEach(t=>t.temp=(t.temp||0)+3);
+    else if(pl.faction.id==='dagbon'){const t=pl.tokens.find(t=>t.pos!=='done'); if(t){if(t.pos==='yard'){t.pos='track';t.track=0;}else if(t.pos==='track')t.track+=6;}}
+    else if(pl.faction.id==='fante') draw(pl,2);
+    log(`AI Leader: ${pl.faction.leader}`);
+  }
+
+  setTimeout(()=>{
+    let a=1+Math.floor(Math.random()*6),b=1+Math.floor(Math.random()*6);
+    G.dice=[a,b];
+    document.getElementById('die1').textContent=a;
+    document.getElementById('die2').textContent=b;
+    G.rolled=true;
+    let moves=[a,b];
+    if(pl.movePenalty) moves=moves.map(m=>Math.max(1,m-pl.movePenalty));
+    G.moves=moves;
+    log(`AI ${pl.name} rolled ${a}+${b}`); AudioFX.dice();
+    setTimeout(()=>aiMoves(diff),400);
+  },400);
+}
+
+function aiMoves(diff){
+  const pl=cur();
+  while(G.moves.length){
+    const steps=G.moves[0];
+    // choose token
+    let candidates=pl.tokens.filter(t=>t.pos!=='done');
+    if(!candidates.length) break;
+    let tok;
+    if(diff==='easy'){
+      tok=candidates[Math.floor(Math.random()*candidates.length)];
+    } else {
+      // prefer track tokens near power or capture, then home, then yard
+      const scored=candidates.map(t=>{
+        let sc=0;
+        if(t.pos==='home') sc+=50+(t.home||0)*10;
+        if(t.pos==='track'){
+          sc+=20+(t.track||0);
+          const a=absTrack(pl,(t.track||0)+steps);
+          if(RING[a]&&RING[a].power) sc+=diff==='hard'?25:10;
+          // capture opportunity
+          G.seats.forEach(op=>{
+            if(op.idx===pl.idx) return;
+            op.tokens.forEach(ot=>{
+              if(ot.pos==='track'&&absTrack(op,ot.track||0)===a){
+                if(t.str+(t.temp||0)>=ot.str+(ot.temp||0)) sc+=diff==='hard'?40:15;
+              }
+            });
+          });
+        }
+        if(t.pos==='yard') sc+=5;
+        if(t.hero) sc+=3;
+        return {t,sc};
+      });
+      scored.sort((a,b)=>b.sc-a.sc);
+      tok=scored[0].t;
+    }
+    G.moves.shift();
+    moveToken(pl.idx, tok.id, steps);
+  }
+  renderTokens();
+  updateAll();
+  setTimeout(()=>{
+    // end AI turn (handle doubles inside endTurn path for AI)
+    const doubles=G.dice[0]===G.dice[1];
+    pl.tokens.forEach(t=>{t.temp=0;t.prot=false;});
+    pl.movePenalty=0; G.noCap=false; G.rolled=false; G.moves=[]; G.sel=null;
+    document.getElementById('die1').textContent='?';
+    document.getElementById('die2').textContent='?';
+    if(doubles){log('AI doubles — again'); setTimeout(()=>aiPlay(),500); return;}
+    pl.silenced=false;
+    G.turn=(G.turn+1)%G.seats.length;
+    log(`— ${cur().name}'s turn —`,true);
+    fxNameplate(cur().name.toUpperCase()+' · '+cur().faction.name.toUpperCase());
+    updateAll();
+    maybePassDevice();
+    if(cur().isAI) setTimeout(()=>aiPlay(),700);
+    else {document.getElementById('roll-btn').disabled=false; draw(cur(),1); updateAll();}
+  },500);
+}
+
+function updateAll(){
+  if(!G) return;
+  // topbar chips
+  document.getElementById('topbar').innerHTML = G.seats.map(s=>`
+    <div class="pchip ${s.idx===G.turn?'active':''}">
+      <span class="c" style="background:${s.faction.color}"></span>
+      ${s.name}${s.isAI?' (AI)':''}
+    </div>`).join('') + `<div class="turn-lbl">${cur().name}</div>`;
+
+  document.getElementById('seat-list').innerHTML = G.seats.map(s=>`
+    <div class="row"><span><span class="dot" style="background:${s.faction.color}"></span>${s.name}</span>
+    <span>${s.tokens.filter(t=>t.pos==='done').length}/4</span></div>`).join('');
+
+  const pl=cur();
+  document.getElementById('side-active').innerHTML=`
+    <img class="thumb" src="${pl.faction.img}" alt="">
+    <div style="font-family:Cinzel,serif;color:var(--gold-l);font-size:.85rem">${pl.faction.name}</div>
+    <div style="font-size:.72rem;color:var(--muted)">${pl.faction.leader}</div>`;
+  const st=t=>t.pos==='done'?'✅':t.pos==='yard'?'Yard':t.pos==='home'?`Home ${t.home}`:`T${(t.track||0)+1}`;
+  document.getElementById('side-tokens').innerHTML=pl.tokens.map(t=>
+    `<div class="row"><span>T${t.id+1} (${t.str}${t.hero?'★':''})</span><span>${st(t)}</span></div>`).join('');
+
+  // hand only for human current
+  const hand=document.getElementById('hand');
+  if(!pl.isAI){
+    hand.innerHTML=pl.hand.map((c,i)=>`
+      <div class="card" onclick="playCard(${i})"><img src="${c.img}" alt=""><div class="lb">${c.name}</div></div>`).join('')||'<span style="color:var(--muted);font-size:.85rem">Empty hand</span>';
+  } else {
+    hand.innerHTML=`<span style="color:var(--muted);font-size:.85rem">AI thinking…</span>`;
+  }
+  document.getElementById('roll-btn').disabled = pl.isAI || G.over || (G.rolled && G.moves.length>0);
+  document.getElementById('leader-btn').disabled = pl.isAI || pl.leaderUsed || G.over;
+  document.getElementById('moves-lbl').textContent = G.moves.length?`Moves: ${G.moves.join(' · ')}`:'';
+  renderTokens();
+}
+
+function confirmQuit(){
+  if(confirm('Leave the race and return to menu?')) location.reload();
+}
+
+/* share */
+const SHARE_TEXT='Race for the Golden Stool in LUDU: Empires of the Gold Coast — Ghanaian fantasy Ludu × Gwent tactics!';
+function shareSocial(net){
+  unlockAch('share');
+  const url=encodeURIComponent(location.href.split('?')[0]);
+  const text=encodeURIComponent(SHARE_TEXT);
+  let href='#';
+  if(net==='x') href=`https://twitter.com/intent/tweet?text=${text}&url=${url}`;
+  if(net==='fb') href=`https://www.facebook.com/sharer/sharer.php?u=${url}`;
+  if(net==='wa') href=`https://wa.me/?text=${text}%20${url}`;
+  window.open(href,'_blank','noopener');
+}
+function shareNative(){
+  unlockAch('share');
+  if(navigator.share) navigator.share({title:'LUDU',text:SHARE_TEXT,url:location.href}).catch(()=>{});
+  else shareSocial('x');
+}
+function shareRecord(){
+  const u=Store.user();
+  const t=u?`${u.display||u.user}: ${u.stats.wins}W / ${u.stats.losses}L on LUDU Gold Coast` : SHARE_TEXT;
+  unlockAch('share');
+  if(navigator.share) navigator.share({title:'LUDU Record',text:t}).catch(()=>{});
+  else window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(t),'_blank');
+}
+function shareWin(){
+  unlockAch('share');
+  const t=`I claimed the Golden Stool in LUDU: Empires of the Gold Coast!`;
+  if(navigator.share) navigator.share({title:'Victory',text:t}).catch(()=>{});
+  else window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(t),'_blank');
+}
+
+
+/* ============================================================
+   AUDIO (Web Audio — no external files)
+   ============================================================ */
+const AudioFX = {
+  ctx:null, enabled:true, unlocked:false,
+  ensure(){
+    if(!this.ctx) this.ctx = new (window.AudioContext||window.webkitAudioContext)();
+    if(this.ctx.state==='suspended') this.ctx.resume();
+    this.unlocked=true;
+  },
+  toggle(){
+    this.enabled=!this.enabled;
+    const b=document.getElementById('sound-btn');
+    if(b) b.textContent='Sound: '+(this.enabled?'On':'Off');
+    if(this.enabled){this.ensure(); this.ui();}
+  },
+  tone(freq, dur, type='sine', gain=0.08, at=0){
+    if(!this.enabled) return;
+    try{
+      this.ensure();
+      const t=this.ctx.currentTime+at;
+      const o=this.ctx.createOscillator();
+      const g=this.ctx.createGain();
+      o.type=type; o.frequency.setValueAtTime(freq,t);
+      g.gain.setValueAtTime(gain,t);
+      g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+      o.connect(g); g.connect(this.ctx.destination);
+      o.start(t); o.stop(t+dur+0.02);
+    }catch(e){}
+  },
+  noise(dur=0.08, gain=0.05){
+    if(!this.enabled) return;
+    try{
+      this.ensure();
+      const n=Math.floor(this.ctx.sampleRate*dur);
+      const buf=this.ctx.createBuffer(1,n,this.ctx.sampleRate);
+      const d=buf.getChannelData(0);
+      for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*0.5;
+      const s=this.ctx.createBufferSource(); s.buffer=buf;
+      const g=this.ctx.createGain(); g.gain.value=gain;
+      s.connect(g); g.connect(this.ctx.destination); s.start();
+    }catch(e){}
+  },
+  ui(){ this.tone(880,0.05,'square',0.04); },
+  dice(){ this.noise(0.06,0.07); this.tone(200,0.08,'triangle',0.06,0.02); this.tone(150,0.1,'triangle',0.05,0.06); },
+  move(){ this.tone(420,0.07,'sine',0.05); this.tone(520,0.06,'sine',0.04,0.05); },
+  capture(){ this.tone(180,0.12,'sawtooth',0.07); this.tone(90,0.2,'sawtooth',0.06,0.05); this.noise(0.1,0.06); },
+  card(){ this.tone(660,0.08,'triangle',0.05); this.tone(880,0.1,'triangle',0.04,0.06); },
+  power(){ this.tone(523,0.1,'sine',0.06); this.tone(659,0.1,'sine',0.05,0.08); this.tone(784,0.15,'sine',0.05,0.16); },
+  win(){ [523,659,784,1046].forEach((f,i)=>this.tone(f,0.25,'triangle',0.07,i*0.12)); },
+  lose(){ this.tone(300,0.2,'sawtooth',0.06); this.tone(200,0.3,'sawtooth',0.05,0.15); },
+  turn(){ this.tone(392,0.1,'sine',0.05); this.tone(494,0.12,'sine',0.05,0.1); },
+  ach(){ this.tone(784,0.1,'square',0.05); this.tone(988,0.15,'square',0.05,0.1); this.tone(1175,0.2,'square',0.04,0.2); },
+};
+
+// Unlock audio on first user gesture
+['click','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,()=>AudioFX.ensure(),{once:true}));
+
+/* ============================================================
+   CLOUD SAVE (API-shaped; local vault until real backend)
+   ============================================================ */
+const CloudAPI = {
+  // Production: set base = 'https://api.yourgame.com'
+  base: null, // null => local simulated cloud
+  async put(user, payload){
+    await delay(350+Math.random()*250);
+    if(this.base){
+      // return fetch(this.base+'/v1/save/'+user,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(r=>r.json());
+    }
+    const vault=JSON.parse(localStorage.getItem('ludu_cloud_vault')||'{}');
+    const prev=vault[user]||{rev:0};
+    const rev=(prev.rev||0)+1;
+    vault[user]={rev, savedAt:Date.now(), payload};
+    localStorage.setItem('ludu_cloud_vault', JSON.stringify(vault));
+    return {ok:true, rev, savedAt:vault[user].savedAt};
+  },
+  async get(user){
+    await delay(300+Math.random()*200);
+    if(this.base){ /* fetch(this.base+'/v1/save/'+user) */ }
+    const vault=JSON.parse(localStorage.getItem('ludu_cloud_vault')||'{}');
+    return vault[user]||null;
+  }
+};
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+
+const CloudSave = {
+  auto:false,
+  payload(){
+    const u=Store.user();
+    if(!u) return null;
+    return {
+      user:u.user, display:u.display, stats:u.stats, ach:u.ach,
+      clanId:(u.clanId||null),
+      settings:{sound:AudioFX.enabled},
+      exportedAt:Date.now()
+    };
+  },
+  async push(){
+    const u=Store.user();
+    const msg=document.getElementById('cloud-msg');
+    if(!u){ if(msg) msg.textContent='Login required to use cloud save.'; AudioFX.ui(); return; }
+    if(msg) msg.textContent='Uploading…';
+    try{
+      const res=await CloudAPI.put(u.user, this.payload());
+      u.cloudRev=res.rev; u.cloudAt=res.savedAt;
+      Store.save(Store.data);
+      if(msg) msg.textContent='Uploaded · revision '+res.rev;
+      this.refreshUI(); AudioFX.ach();
+    }catch(e){ if(msg) msg.textContent='Upload failed'; }
+  },
+  async pull(){
+    const u=Store.user();
+    const msg=document.getElementById('cloud-msg');
+    if(!u){ if(msg) msg.textContent='Login required.'; return; }
+    if(msg) msg.textContent='Downloading…';
+    try{
+      const remote=await CloudAPI.get(u.user);
+      if(!remote){ if(msg) msg.textContent='No cloud save found.'; return; }
+      const p=remote.payload||{};
+      if(p.stats) u.stats=p.stats;
+      if(p.ach) u.ach=p.ach;
+      if(p.display) u.display=p.display;
+      if(p.clanId) u.clanId=p.clanId;
+      u.cloudRev=remote.rev; u.cloudAt=remote.savedAt;
+      Store.save(Store.data);
+      if(msg) msg.textContent='Restored revision '+remote.rev;
+      this.refreshUI(); refreshHub(); AudioFX.power();
+    }catch(e){ if(msg) msg.textContent='Download failed'; }
+  },
+  autoToggle(){
+    this.auto=!this.auto;
+    const b=document.getElementById('cloud-auto-btn');
+    if(b) b.textContent='Auto-sync: '+(this.auto?'On':'Off');
+    AudioFX.ui();
+  },
+  maybeAuto(){ if(this.auto && Store.user()) this.push(); },
+  refreshUI(){
+    const u=Store.user();
+    const st=document.getElementById('cloud-status');
+    if(!u){ if(st){st.textContent='● Login required'; st.className='sync-pill';} return; }
+    if(st){ st.textContent=u.cloudRev?'● Synced · rev '+u.cloudRev:'● Not uploaded yet'; st.className='sync-pill '+(u.cloudRev?'ok':'pend'); }
+    const rev=document.getElementById('cloud-rev'); if(rev) rev.textContent=u.cloudRev||0;
+    const when=document.getElementById('cloud-when');
+    if(when) when.textContent=u.cloudAt? new Date(u.cloudAt).toLocaleString() : '—';
+    const size=document.getElementById('cloud-size');
+    if(size){ const p=this.payload(); size.textContent=p? (JSON.stringify(p).length+' B') : '—'; }
+  }
+};
+
+/* ============================================================
+   LEADERBOARDS (multi-style; local seed + player submit)
+   ============================================================ */
+const LB = {
+  current:'global',
+  seed(){
+    let db=JSON.parse(localStorage.getItem('ludu_lb_v1')||'null');
+    if(db) return db;
+    const names=['Kofi Gold','Ama Storm','Yaw Drum','Efua Mist','Kojo Flame','Abena Tide','Nana Hawk','Serwaa Veil','Kwame Ash','Adwoa Reed'];
+    const factions=['ashanti','fante','dagbon','ewe'];
+    db={ global:[], weekly:[], seasonal:[], friends:[], clans:[], faction:{} };
+    for(let i=0;i<12;i++){
+      const e={name:names[i%names.length], score:1200-i*70-Math.floor(Math.random()*40), wins:40-i*2, faction:factions[i%4], rating:1800-i*55};
+      db.global.push({...e});
+      db.weekly.push({...e, score:Math.floor(e.score/3)+Math.floor(Math.random()*80)});
+      db.seasonal.push({...e, score:e.score+Math.floor(Math.random()*100)});
+    }
+    db.friends=db.global.slice(0,5);
+    factions.forEach(f=>{ db.faction[f]=db.global.filter(x=>x.faction===f).map(x=>({...x})); });
+    // clans board filled from Clans store later
+    db.clans=[];
+    localStorage.setItem('ludu_lb_v1', JSON.stringify(db));
+    return db;
+  },
+  save(db){ localStorage.setItem('ludu_lb_v1', JSON.stringify(db)); },
+  desc:{
+    global:'All-time ranking by prestige score (wins × 25 + captures × 3).',
+    weekly:'Resets conceptually each week — highest activity this cycle.',
+    seasonal:'Season of the Gold Coast — cumulative seasonal prestige.',
+    friends:'Players you have marked as friends (local list).',
+    clans:'Clan Wars — aggregate clan trophies vs other clans.',
+    faction:'Filter by empire affinity (Ashanti / Fante / Dagbon / Ewe).'
+  },
+  show(type){
+    this.current=type;
+    document.querySelectorAll('#lb-tabs .tab').forEach(t=>t.classList.toggle('on', t.dataset.lb===type));
+    const d=document.getElementById('lb-desc'); if(d) d.textContent=this.desc[type]||'';
+    const db=this.seed();
+    let rows=[];
+    if(type==='clans'){
+      rows = (Clans.list().length? Clans.list() : db.clans).map(c=>({name:`[${c.tag}] ${c.name}`, score:c.trophies||0, sub:(c.members||[]).length+' members'}));
+      rows.sort((a,b)=>b.score-a.score);
+    } else if(type==='faction'){
+      // show best of each faction
+      rows=[];
+      ['ashanti','fante','dagbon','ewe'].forEach(f=>{
+        const arr=(db.faction[f]||[]).slice().sort((a,b)=>b.score-a.score);
+        if(arr[0]) rows.push({name:arr[0].name+' · '+f, score:arr[0].score, sub:FACTIONS[f].name});
+      });
+      rows.sort((a,b)=>b.score-a.score);
+    } else {
+      rows=(db[type]||db.global).slice().sort((a,b)=>b.score-a.score).map(e=>({name:e.name, score:e.score, sub:(e.wins!=null?e.wins+' wins':'')}));
+    }
+    const u=Store.user();
+    const meName=u?(u.display||u.user):null;
+    const list=document.getElementById('lb-list');
+    if(!list) return;
+    list.innerHTML=rows.slice(0,15).map((r,i)=>`
+      <div class="lb-row ${meName&&r.name.startsWith(meName)?'me':''}">
+        <div class="rank">${i+1}</div>
+        <div class="who"><strong>${r.name}</strong><div style="font-size:.72rem;color:var(--muted)">${r.sub||''}</div></div>
+        <div class="score">${r.score}</div>
+      </div>`).join('') || '<p class="form-hint">Empty board — submit a score.</p>';
+  },
+  submitScore(){
+    const u=Store.user();
+    if(!u){ alert('Login required to submit scores.'); showScreen('login-screen'); return; }
+    Store.ensureStats(u);
+    const score=(u.stats.wins||0)*25+(u.stats.captures||0)*3+(u.stats.powers||0)+(u.ach||[]).length*5;
+    const db=this.seed();
+    const entry={name:u.display||u.user, score, wins:u.stats.wins||0, faction:u.favFaction||'ashanti', rating:1000+score};
+    ['global','weekly','seasonal'].forEach(k=>{
+      db[k]=db[k].filter(e=>e.name!==entry.name);
+      db[k].push({...entry});
+      db[k].sort((a,b)=>b.score-a.score);
+    });
+    // friends: add self
+    db.friends=db.friends.filter(e=>e.name!==entry.name);
+    db.friends.push({...entry});
+    const f=entry.faction;
+    if(!db.faction[f]) db.faction[f]=[];
+    db.faction[f]=db.faction[f].filter(e=>e.name!==entry.name);
+    db.faction[f].push({...entry});
+    this.save(db);
+    // clan trophies
+    if(u.clanId) Clans.addTrophies(u.clanId, Math.max(5, Math.floor(score/20)));
+    AudioFX.ach();
+    this.show(this.current);
+    unlockAch('share'); // herald spirit
+    alert('Score submitted: '+score+' prestige');
+    CloudSave.maybeAuto();
+  },
+  addFriend(){
+    const u=Store.user();
+    if(!u){ alert('Login required'); return; }
+    const name=prompt('Friend display name to track on Friends board');
+    if(!name) return;
+    const db=this.seed();
+    if(!db.friends.some(e=>e.name===name)) db.friends.push({name, score:0, wins:0, faction:'ashanti'});
+    this.save(db); this.show('friends'); AudioFX.ui();
+  }
+};
+
+/* ============================================================
+   CLANS & TEAMS
+   ============================================================ */
+const Clans = {
+  store(){ return JSON.parse(localStorage.getItem('ludu_clans_v1')||'{"clans":[]}'); },
+  save(s){ localStorage.setItem('ludu_clans_v1', JSON.stringify(s)); },
+  list(){ return this.store().clans||[]; },
+  create(){
+    const u=Store.user();
+    if(!u){ alert('Login required to create a clan.'); showScreen('login-screen'); return; }
+    const name=(document.getElementById('clan-name').value||'').trim();
+    const tag=(document.getElementById('clan-tag').value||'').trim().toUpperCase();
+    if(name.length<3){ alert('Name too short'); return; }
+    if(tag.length<3||tag.length>5){ alert('Tag must be 3–5 letters'); return; }
+    const s=this.store();
+    if(s.clans.some(c=>c.tag===tag)){ alert('Tag taken'); return; }
+    if(u.clanId){ alert('Leave your clan first (re-register clear or join overwrites)'); }
+    const clan={id:'c_'+Date.now(), name, tag, leader:u.user, members:[u.user], trophies:100, createdAt:Date.now()};
+    s.clans.push(clan);
+    this.save(s);
+    u.clanId=clan.id;
+    Store.save(Store.data);
+    AudioFX.ach();
+    this.refresh();
+    LB.show('clans');
+  },
+  join(){
+    const u=Store.user();
+    if(!u){ alert('Login required.'); showScreen('login-screen'); return; }
+    const tag=(document.getElementById('clan-join').value||'').trim().toUpperCase();
+    const s=this.store();
+    const clan=s.clans.find(c=>c.tag===tag);
+    if(!clan){ alert('Clan not found'); return; }
+    // leave old
+    if(u.clanId){
+      const old=s.clans.find(c=>c.id===u.clanId);
+      if(old) old.members=(old.members||[]).filter(m=>m!==u.user);
+    }
+    if(!clan.members.includes(u.user)) clan.members.push(u.user);
+    u.clanId=clan.id;
+    this.save(s); Store.save(Store.data);
+    AudioFX.ui(); this.refresh();
+  },
+  addTrophies(id, n){
+    const s=this.store();
+    const c=s.clans.find(x=>x.id===id);
+    if(c){ c.trophies=(c.trophies||0)+n; this.save(s); }
+  },
+  refresh(){
+    const u=Store.user();
+    const mine=document.getElementById('clan-mine');
+    const s=this.store();
+    if(!mine) return;
+    if(u && u.clanId){
+      const c=s.clans.find(x=>x.id===u.clanId);
+      if(c){
+        mine.innerHTML=`<div class="clan-card"><h4>[${c.tag}] ${c.name}</h4>
+          <p>Trophies: <strong style="color:var(--gold)">${c.trophies||0}</strong> · Members: ${(c.members||[]).length}</p>
+          <p>Leader: ${c.leader}</p>
+          <button class="btn btn-ghost btn-sm" onclick="Clans.leave()">Leave Clan</button></div>`;
+      } else mine.innerHTML='<p class="form-hint">Clan missing — create or join.</p>';
+    } else mine.innerHTML='<p class="form-hint">You are not in a clan. Login and create/join one.</p>';
+    const top=document.getElementById('clan-top');
+    if(top){
+      const rows=[...s.clans].sort((a,b)=>(b.trophies||0)-(a.trophies||0)).slice(0,8);
+      top.innerHTML=rows.map((c,i)=>`<div class="lb-row"><div class="rank">${i+1}</div>
+        <div class="who"><strong>[${c.tag}] ${c.name}</strong><div style="font-size:.72rem;color:var(--muted)">${(c.members||[]).length} members</div></div>
+        <div class="score">${c.trophies||0}</div></div>`).join('')||'<p class="form-hint">No clans yet.</p>';
+    }
+  },
+  leave(){
+    const u=Store.user(); if(!u||!u.clanId) return;
+    const s=this.store();
+    const c=s.clans.find(x=>x.id===u.clanId);
+    if(c) c.members=(c.members||[]).filter(m=>m!==u.user);
+    u.clanId=null; this.save(s); Store.save(Store.data); this.refresh();
+  }
+};
+
+/* ============================================================
+   MULTIPLAYER SCAFFOLD (NetAPI + rooms + ready-check)
+   ============================================================ */
+const NetAPI = {
+  mode:'simulated', // 'simulated' | 'socket'
+  socket:null,
+  handlers:{},
+  connect(url){
+    // Production:
+    // this.socket=new WebSocket(url);
+    // this.socket.onmessage=ev=>{ const msg=JSON.parse(ev.data); (this.handlers[msg.type]||[]).forEach(fn=>fn(msg)); };
+    this.mode=url?'socket':'simulated';
+    return Promise.resolve({ok:true, mode:this.mode});
+  },
+  on(type, fn){ (this.handlers[type]=this.handlers[type]||[]).push(fn); },
+  send(type, data){
+    if(this.mode==='socket' && this.socket) this.socket.send(JSON.stringify({type, data}));
+    else {
+      // simulate echo/bus for local fake peers
+      setTimeout(()=> (this.handlers[type]||[]).forEach(fn=>fn({type, data})), 50);
+    }
+  }
+};
+
+const MP = {
+  room:null,
+  createRoom(){
+    const u=Store.user();
+    const code=('ST'+Math.random().toString(36).slice(2,6)).toUpperCase();
+    this.room={
+      code,
+      host: u?u.user:'guest',
+      seats:[
+        {name:u?(u.display||u.user):'Host', ready:false, you:true, faction:null},
+        {name:'— open —', ready:false, you:false, open:true},
+        {name:'— open —', ready:false, you:false, open:true},
+        {name:'— open —', ready:false, you:false, open:true},
+      ]
+    };
+    // simulate 1 ghost joining later
+    setTimeout(()=>{
+      if(!this.room) return;
+      const slot=this.room.seats.find(s=>s.open);
+      if(slot){ slot.open=false; slot.name='Courier_'+Math.floor(Math.random()*90); slot.ready=Math.random()>0.5; }
+      this.renderLobby();
+    }, 1500);
+    document.getElementById('mp-lobby').style.display='block';
+    this.renderLobby();
+    AudioFX.ui();
+    NetAPI.send('room_create', {code});
+  },
+  joinRoom(){
+    const code=(document.getElementById('mp-code').value||'').trim().toUpperCase();
+    if(code.length<4){ alert('Enter a valid code'); return; }
+    const u=Store.user();
+    this.room={
+      code,
+      host:'remote',
+      seats:[
+        {name:'Host', ready:true, you:false},
+        {name:u?(u.display||u.user):'You', ready:false, you:true},
+        {name:'— open —', ready:false, open:true},
+        {name:'— open —', ready:false, open:true},
+      ]
+    };
+    document.getElementById('mp-lobby').style.display='block';
+    this.renderLobby(); AudioFX.ui();
+  },
+  quickMatch(){
+    // fake matchmaking delay
+    const st=document.getElementById('mp-net-status');
+    if(st) st.textContent='Matchmaking…';
+    AudioFX.ui();
+    setTimeout(()=>{
+      this.createRoom();
+      if(this.room){
+        this.room.seats[1]={name:'Ranked_Rival', ready:true, you:false};
+        this.room.seats[0].ready=true;
+        this.renderLobby();
+        if(st) st.textContent='Match found · simulated room '+this.room.code;
+        AudioFX.turn();
+      }
+    }, 1200);
+  },
+  toggleReady(){
+    if(!this.room) return;
+    const me=this.room.seats.find(s=>s.you);
+    if(me){ me.ready=!me.ready; this.renderLobby(); AudioFX.ui(); }
+  },
+  startIfReady(){
+    if(!this.room) return;
+    const filled=this.room.seats.filter(s=>!s.open);
+    if(filled.length<2){ alert('Need at least 2 players'); return; }
+    if(!filled.every(s=>s.ready)){ alert('Not all players are ready'); return; }
+    // Launch hotseat-like game using filled seats as humans (scaffold — real MP would sync state via NetAPI)
+    meta.mode='hotseat';
+    meta.hotCount=Math.min(4, filled.length);
+    const fids=['ashanti','fante','dagbon','ewe'];
+    meta.picks={};
+    filled.forEach((s,i)=>{ meta.picks[i]=fids[i%4]; });
+    // build seats for beginGame path
+    const seats=filled.map((s,i)=>({
+      factionId:fids[i%4],
+      isAI:false,
+      name:s.name,
+      difficulty:'normal'
+    }));
+    initGame(seats);
+    showScreen('game-screen');
+    fxBanner('ONLINE TABLE');
+    AudioFX.power();
+    log('Online scaffold: local co-op from room '+this.room.code+'. Wire NetAPI for true lockstep.', true);
+  },
+  leave(){
+    this.room=null;
+    document.getElementById('mp-lobby').style.display='none';
+    AudioFX.ui();
+  },
+  renderLobby(){
+    if(!this.room) return;
+    document.getElementById('mp-room-code').textContent=this.room.code;
+    document.getElementById('mp-seats').innerHTML=this.room.seats.map((s,i)=>`
+      <div class="lobby-seat ${s.open?'':'filled'}">
+        <span>Seat ${i+1}: ${s.name}${s.you?' (you)':''}</span>
+        <span style="color:${s.ready?'#6c6':varMuted()}">${s.open?'Open':(s.ready?'Ready':'Not ready')}</span>
+      </div>`).join('');
+    const me=this.room.seats.find(s=>s.you);
+    const btn=document.getElementById('mp-ready-btn');
+    if(btn&&me) btn.textContent=me.ready?'Unready':'Ready';
+    const st=document.getElementById('mp-net-status');
+    if(st) st.textContent='NetAPI: '+NetAPI.mode+' · room '+this.room.code;
+  },
+  refresh(){
+    if(this.room) { document.getElementById('mp-lobby').style.display='block'; this.renderLobby(); }
+  }
+};
+function varMuted(){ return 'var(--muted)'; }
+
+
+refreshHub();
+</script>
+
+<script>
+// Demo deep-link: ?demo=hub|mode|game|lb|clan|mp|cloud
+(function(){
+  const q=new URLSearchParams(location.search).get('demo');
+  if(!q) return;
+  function go(){
+    try{
+      if(q==='hub'){ showScreen('hub-screen'); }
+      else if(q==='mode'){ showScreen('mode-screen'); syncModeUI&&syncModeUI(); }
+      else if(q==='lb'){ showScreen('lb-screen'); LB.show('global'); }
+      else if(q==='clan'){
+        // seed a clan for visual interest
+        try{
+          const s=Clans.store();
+          if(!s.clans.length){
+            s.clans=[{id:'c_demo',name:'Golden Stool Guard',tag:'GSG',leader:'demo',members:['demo','kofi'],trophies:420,createdAt:Date.now()},
+                     {id:'c_demo2',name:'Harmattan Riders',tag:'HMR',leader:'ama',members:['ama'],trophies:310,createdAt:Date.now()}];
+            Clans.save(s);
+          }
+        }catch(e){}
+        showScreen('clan-screen'); Clans.refresh();
+      }
+      else if(q==='mp'){ showScreen('mp-screen'); MP.createRoom(); }
+      else if(q==='cloud'){ showScreen('cloud-screen'); CloudSave.refreshUI(); }
+      else if(q==='game' || q==='mid'){
+        meta.mode='ai'; meta.aiCount=1; meta.difficulty='normal'; meta.picks={0:'ashanti',1:'fante'};
+        const seats=[
+          {factionId:'ashanti', isAI:false, name:'You · Ashanti', difficulty:'normal'},
+          {factionId:'fante', isAI:true, name:'AI · Fante Coast', difficulty:'normal'}
+        ];
+        initGame(seats);
+        const a=G.seats[0], b=G.seats[1];
+        // Place tokens on path for a lively board
+        a.tokens[0].pos='track'; a.tokens[0].track=4;
+        a.tokens[1].pos='track'; a.tokens[1].track=11;
+        a.tokens[2].pos='yard'; a.tokens[2].track=0;
+        a.tokens[3].pos='home'; a.tokens[3].home=1;
+        b.tokens[0].pos='track'; b.tokens[0].track=16;
+        b.tokens[1].pos='track'; b.tokens[1].track=22;
+        b.tokens[2].pos='track'; b.tokens[2].track=7;
+        b.tokens[3].pos='yard';
+        // Deal a visible hand of real cards
+        if(a.deck && a.deck.length){
+          a.hand = a.deck.splice(0,5);
+        }
+        // Fake dice ready
+        const d1=document.getElementById('die1'), d2=document.getElementById('die2');
+        if(d1) d1.textContent='5'; if(d2) d2.textContent='3';
+        G.pendingMoves = 8; G.phase='move';
+        const rb=document.getElementById('roll-btn'); if(rb) rb.disabled=true;
+        const eb=document.getElementById('end-btn'); if(eb) eb.style.display='inline-block';
+        const ml=document.getElementById('moves-lbl'); if(ml) ml.textContent='Moves left: 8 (demo)';
+        log('DEMO: Ashanti vs Fante — race for the Golden Stool', true);
+        log('You rolled 5+3. Choose a token, or play a Gwent-style card.', true);
+        log('Power tiles active on the path. Leader ready.', true);
+        updateAll();
+        showScreen('game-screen');
+        // force token redraw after layout
+        setTimeout(()=>{ updateAll(); fxBanner('DEMO BATTLE'); fxNameplate('YOU · ASHANTI EMPIRE'); }, 200);
+      }
+    }catch(e){ console.error('demo', e); document.title='demo-err '+e; }
+  }
+  // wait for fonts/images
+  if(document.readyState==='complete') setTimeout(go, 600);
+  else window.addEventListener('load', ()=>setTimeout(go, 600));
+})();
+</script>
+
+</body>
+</html>
