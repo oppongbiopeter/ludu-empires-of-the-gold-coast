@@ -9,3 +9,12 @@ tmp/
 __pycache__/
 *.backup.html
 index.backup.html
+.vercel/
+.grok/
+.tanstack/
+dist/
+screenshots/
+artifacts/
+attachments/
+.env
+.env.*

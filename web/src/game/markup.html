@@ -1,0 +1,441 @@
+<div class="fx-layer"><div class="fx-vignette" id="fx-vignette"></div><div class="fx-flash" id="fx-flash"></div><div class="fx-banner" id="fx-banner"></div><div class="fx-nameplate" id="fx-nameplate"></div></div>
+
+<!-- HUB -->
+<div id="hub-screen" class="screen active">
+  <div class="user-bar">
+    <span id="hub-user">Playing as <strong>Guest</strong></span>
+    <span class="user-actions">
+      <button class="btn btn-ghost btn-sm" id="sound-btn" onclick="AudioFX.toggle()">Sound: On</button>
+      <button class="btn btn-ghost btn-sm" id="btn-login-top" onclick="showScreen('login-screen')">Login</button>
+      <button class="btn btn-ghost btn-sm" onclick="showScreen('profile-screen')" id="btn-profile">Profile</button>
+    </span>
+  </div>
+  <img class="hero" src="/ludu/assets/board/board.jpg" alt="Board">
+  <h1>LUDU</h1>
+  <div class="sub">Empires of the Gold Coast</div>
+  <p class="tag">Race for the Stool · Tactics cards · Classic Ludu soul</p>
+  <div class="hub-actions">
+    <button class="btn" data-i18n="play" onclick="AudioFX.ui();openInstant()">Play</button>
+    <button class="btn" onclick="AudioFX.ui();openStory()">Story</button>
+    <button class="btn btn-ghost" onclick="AudioFX.ui();showScreen('history-screen')">History & Leaders</button>
+    <button class="btn" data-i18n="online" onclick="AudioFX.ui();showScreen('mp-screen')">Online Multiplayer</button>
+    <button class="btn btn-ghost" data-i18n="boards" onclick="AudioFX.ui();showScreen('lb-screen')">Leaderboards</button>
+    <button class="btn btn-ghost" data-i18n="clans" onclick="AudioFX.ui();showScreen('clan-screen')">Clans & Teams</button>
+    <button class="btn btn-ghost" data-i18n="cloud" onclick="AudioFX.ui();showScreen('cloud-screen')">Cloud Save</button>
+    <button class="btn btn-ghost" data-i18n="account" onclick="AudioFX.ui();showScreen('login-screen')">Login / Register</button>
+    <button class="btn btn-ghost" data-i18n="profile" onclick="AudioFX.ui();showScreen('profile-screen')">Profile & Achievements</button>
+    <button class="btn btn-ghost" data-i18n="howto" onclick="openModal('rules-modal')">How to Play</button>
+    <button class="btn btn-ghost" data-i18n="options" onclick="openOptions()">Options</button>
+    <button class="btn btn-ghost" data-i18n="share" onclick="openModal('share-modal')">Share</button>
+  </div>
+  <div class="badge-row" id="hub-badges"></div>
+</div>
+
+<div id="history-screen" class="screen panel-screen">
+  <div class="panel-card" style="max-width:760px">
+    <h2>Leaders & the Coast</h2>
+    <p class="form-hint">Gold Coast stools first. Story invaders are fictional captains set against real countries — Dahomey, the Hausa states, Yoruba kingdoms, the Baoulé crossing, and the Kabyè highlands.</p>
+    <div class="history-grid" id="history-list"></div>
+    <button class="btn btn-ghost" style="width:100%;margin-top:.8rem" onclick="showScreen('hub-screen')">Back</button>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen" class="screen panel-screen">
+  <div class="panel-card">
+    <h2>Account</h2>
+    <p class="form-hint">Optional — play as guest anytime. Login unlocks saves, records, achievements & sharing identity.</p>
+    <div style="display:flex;gap:.5rem;justify-content:center;margin-bottom:.8rem">
+      <button class="btn btn-sm" id="tab-login" onclick="setAuthTab('login')">Login</button>
+      <button class="btn btn-ghost btn-sm" id="tab-reg" onclick="setAuthTab('reg')">Register</button>
+    </div>
+    <div id="auth-login">
+      <label class="field">Username</label>
+      <input id="login-user" autocomplete="username" placeholder="Your name">
+      <label class="field">Password</label>
+      <input id="login-pass" type="password" autocomplete="current-password" placeholder="Password">
+      <div class="err" id="login-err"></div>
+      <button class="btn" style="width:100%" onclick="doLogin()">Enter the Gold Coast</button>
+    </div>
+    <div id="auth-reg" style="display:none">
+      <label class="field">Username</label>
+      <input id="reg-user" placeholder="Choose a name">
+      <label class="field">Password</label>
+      <input id="reg-pass" type="password" placeholder="Min 4 characters">
+      <label class="field">Display name</label>
+      <input id="reg-display" placeholder="Shown on leaderboards">
+      <div class="err" id="reg-err"></div>
+      <button class="btn" style="width:100%" onclick="doRegister()">Create Account</button>
+    </div>
+    <button class="btn btn-ghost" style="width:100%;margin-top:.6rem" onclick="playAsGuest()">Continue as Guest</button>
+    <button class="btn btn-ghost" style="width:100%" onclick="showScreen('hub-screen')">Back</button>
+  </div>
+</div>
+
+<!-- MODE -->
+<div id="mode-screen" class="screen panel-screen">
+  <div class="panel-card">
+    <h2>Game Mode</h2>
+    <div class="mode-grid">
+      <button class="mode-btn on" id="mode-ai" onclick="setMode('ai')"><h3>Vs AI</h3><p>You against 3 rival empires. Pick a difficulty.</p></button>
+      <button class="mode-btn" id="mode-hot" onclick="setMode('hotseat')"><h3>Local — one phone</h3><p>2–4 players, pass the phone. Built for a big screen.</p></button>
+      <button class="mode-btn" id="mode-solo" onclick="setMode('solo')"><h3>Solo — Ancestors</h3><p>Race alone. After each turn the Ancestors answer. Three catastrophes end you.</p></button>
+    </div>
+    <div id="ai-opts">
+      <p style="text-align:center;color:var(--muted);font-size:.85rem;margin-bottom:.3rem">AI Difficulty</p>
+      <div class="diff-row">
+        <button class="diff-btn" data-d="easy" onclick="setDiff('easy')">Easy</button>
+        <button class="diff-btn on" data-d="normal" onclick="setDiff('normal')">Normal</button>
+        <button class="diff-btn" data-d="hard" onclick="setDiff('hard')">Hard</button>
+        <button class="diff-btn" data-d="advanced" data-i18n="adv" onclick="setDiff('advanced')">Advanced</button>
+      </div>
+      <p class="form-hint">Solo play is always a full table: you and 3 opponents, one empire each.</p>
+    </div>
+    <div id="solo-opts" style="display:none">
+      <p style="text-align:center;color:var(--muted);font-size:.85rem;margin-bottom:.3rem">Ancestral Challenge</p>
+      <div class="diff-row">
+        <button class="diff-btn" data-s="initiate" onclick="setSolo('initiate')">Initiate</button>
+        <button class="diff-btn on" data-s="warrior" onclick="setSolo('warrior')">Warrior</button>
+        <button class="diff-btn" data-s="legend" onclick="setSolo('legend')">Legend</button>
+      </div>
+      <p class="form-hint">Initiate is forgiving. Warrior is balanced. Legend is a short, relentless deck.</p>
+    </div>
+    <div id="hot-opts" style="display:none">
+      <p style="text-align:center;color:var(--gold-l);font-family:'Cinzel',serif;letter-spacing:.06em">How many at the table?</p>
+      <p class="form-hint">Maximum 4. Pass a big-screen phone between brothers — each color moves only on its turn.</p>
+      <div class="count-row">
+        <button class="count-btn" data-p="2" onclick="setHotCount(2)">2<small>players</small></button>
+        <button class="count-btn" data-p="3" onclick="setHotCount(3)">3<small>players</small></button>
+        <button class="count-btn on" data-p="4" onclick="setHotCount(4)">4<small>players</small></button>
+      </div>
+    </div>
+    <button class="btn" style="width:100%;margin-top:.8rem" onclick="showScreen('faction-screen')">Choose Empires</button>
+    <button class="btn btn-ghost" style="width:100%" onclick="showScreen('hub-screen')">Back</button>
+  </div>
+</div>
+
+<!-- FACTION -->
+<div id="faction-screen" class="screen panel-screen">
+  <div class="panel-card" style="max-width:720px">
+    <h2 id="faction-title">Choose Your Empire</h2>
+    <p id="faction-hint" class="form-hint">Pick a faction for seat 1</p>
+    <div class="faction-grid" id="faction-grid"></div>
+    <p class="form-hint" style="margin-bottom:.2rem">Shadows of the Coast — optional leaders</p>
+    <div class="diff-row">
+      <button class="diff-btn" id="alt-yaa" type="button" onclick="toggleAlt('ashanti')">Yaa Asantewaa</button>
+      <button class="diff-btn" id="alt-ga" type="button" onclick="toggleAlt('fante')">Ga Mantse</button>
+    </div>
+    <div id="seat-summary" style="font-size:.85rem;color:var(--muted);margin:.5rem 0;text-align:left"></div>
+    <button class="btn" style="width:100%" id="begin-btn" onclick="openDraft()" disabled>Choose 5 Cards</button>
+    <button class="btn btn-ghost" style="width:100%" onclick="factionBack()">Back</button>
+  </div>
+</div>
+
+<!-- STORY -->
+<div id="story-screen" class="screen panel-screen">
+  <div class="panel-card story-card">
+    <h2>Story — The Invaders</h2>
+    <p class="form-hint">A road of challengers from Benin, Nigeria, Côte d’Ivoire, and Togo. Win a gate to open the next. This is separate from instant play.</p>
+    <div class="story-map" id="story-map">
+      <img src="/ludu/assets/ui/story_map.jpg" alt="">
+      <svg class="story-road" id="story-road" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+      <div id="story-nodes"></div>
+    </div>
+    <div class="story-detail" id="story-detail"></div>
+    <button class="btn" style="width:100%" id="story-go" onclick="launchStory()" disabled>March</button>
+    <button class="btn btn-ghost" style="width:100%" onclick="showScreen('hub-screen')">Back</button>
+  </div>
+</div>
+
+<!-- DRAFT -->
+<div id="draft-screen" class="screen panel-screen">
+  <div class="panel-card" style="max-width:860px">
+    <h2 id="draft-title">Choose 5 cards</h2>
+    <p id="draft-hint" class="form-hint">Bring five. The rest stay in reserve.</p>
+    <div class="draft-leader" id="draft-leader"></div>
+    <div class="draft-grid" id="draft-grid"></div>
+    <p id="draft-count" class="form-hint">0 / 5</p>
+    <button class="btn" style="width:100%" id="draft-go" onclick="confirmDraft()" disabled>Take these cards</button>
+    <button class="btn btn-ghost" style="width:100%" onclick="draftBack()">Back</button>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div id="profile-screen" class="screen panel-screen">
+  <div class="panel-card">
+    <h2>Profile</h2>
+    <p id="prof-name" style="color:var(--gold-l);font-family:'Cinzel',serif"></p>
+    <div class="stat-grid">
+      <div class="stat-box"><b id="st-wins">0</b><span>Wins</span></div>
+      <div class="stat-box"><b id="st-losses">0</b><span>Losses</span></div>
+      <div class="stat-box"><b id="st-games">0</b><span>Games</span></div>
+      <div class="stat-box"><b id="st-caps">0</b><span>Captures</span></div>
+      <div class="stat-box"><b id="st-powers">0</b><span>Power-ups</span></div>
+      <div class="stat-box"><b id="st-ach">0</b><span>Achievements</span></div>
+    </div>
+    <h3 class="cinzel" style="color:var(--gold);font-size:.9rem;margin:1rem 0 .5rem;letter-spacing:.1em">ACHIEVEMENTS</h3>
+    <div class="ach-list" id="ach-list"></div>
+    <div class="share-row">
+      <button class="btn btn-sm" onclick="shareRecord()">Share Record</button>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+    </div>
+    <button class="btn btn-ghost" style="width:100%" onclick="showScreen('hub-screen')">Back</button>
+  </div>
+</div>
+
+
+<!-- CLOUD SAVE -->
+<div id="cloud-screen" class="screen panel-screen">
+  <div class="panel-card" style="max-width:560px">
+    <h2>Cloud Save</h2>
+    <p class="form-hint">Login required to sync. Prototype uses a local cloud vault (same browser) with the same API shape as a real backend — swap CloudAPI base URL later for production.</p>
+    <div style="text-align:center;margin:.5rem 0">
+      <span class="sync-pill" id="cloud-status">● Offline vault</span>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-box"><b id="cloud-rev">0</b><span>Revision</span></div>
+      <div class="stat-box"><b id="cloud-when">—</b><span>Last Sync</span></div>
+      <div class="stat-box"><b id="cloud-size">—</b><span>Payload</span></div>
+    </div>
+    <button class="btn" style="width:100%;margin-top:.5rem" onclick="CloudSave.push()">Upload to Cloud</button>
+    <button class="btn btn-ghost" style="width:100%" onclick="CloudSave.pull()">Download from Cloud</button>
+    <button class="btn btn-ghost" style="width:100%" onclick="CloudSave.autoToggle()" id="cloud-auto-btn">Auto-sync: Off</button>
+    <p id="cloud-msg" class="form-hint" style="margin-top:.6rem"></p>
+    <button class="btn btn-ghost" style="width:100%" onclick="showScreen('hub-screen')">Back</button>
+  </div>
+</div>
+
+<!-- LEADERBOARDS -->
+<div id="lb-screen" class="screen panel-screen">
+  <div class="panel-card" style="max-width:560px">
+    <h2>Leaderboards</h2>
+    <div class="tabs" id="lb-tabs">
+      <button class="tab on" data-lb="global" onclick="LB.show('global')">Global</button>
+      <button class="tab" data-lb="weekly" onclick="LB.show('weekly')">Weekly</button>
+      <button class="tab" data-lb="seasonal" onclick="LB.show('seasonal')">Seasonal</button>
+      <button class="tab" data-lb="friends" onclick="LB.show('friends')">Friends</button>
+      <button class="tab" data-lb="clans" onclick="LB.show('clans')">Clan Wars</button>
+      <button class="tab" data-lb="faction" onclick="LB.show('faction')">By Faction</button>
+    </div>
+    <p class="form-hint" id="lb-desc">All-time wins across the Gold Coast.</p>
+    <div class="mini-list" id="lb-list"></div>
+    <button class="btn" style="width:100%;margin-top:.7rem" onclick="LB.submitScore()">Submit My Score</button>
+    <button class="btn btn-ghost" style="width:100%" onclick="LB.addFriend()">Add Friend (local)</button>
+    <button class="btn btn-ghost" style="width:100%" onclick="showScreen('hub-screen')">Back</button>
+  </div>
+</div>
+
+<!-- CLANS -->
+<div id="clan-screen" class="screen panel-screen">
+  <div class="panel-card" style="max-width:560px">
+    <h2>Clans & Teams</h2>
+    <p class="form-hint">Create or join a clan. Clan trophies feed the Clan Wars leaderboard.</p>
+    <div id="clan-mine"></div>
+    <label class="field">Create clan name</label>
+    <input id="clan-name" placeholder="e.g. Golden Stool Guard">
+    <label class="field">Tag (3–5 letters)</label>
+    <input id="clan-tag" maxlength="5" placeholder="GSG">
+    <button class="btn" style="width:100%" onclick="Clans.create()">Create Clan</button>
+    <label class="field" style="margin-top:.8rem">Join by tag</label>
+    <input id="clan-join" placeholder="TAG">
+    <button class="btn btn-ghost" style="width:100%" onclick="Clans.join()">Join Clan</button>
+    <h3 class="cinzel" style="color:var(--gold);font-size:.85rem;margin:1rem 0 .4rem;letter-spacing:.1em">TOP CLANS</h3>
+    <div class="mini-list" id="clan-top"></div>
+    <button class="btn btn-ghost" style="width:100%;margin-top:.5rem" onclick="showScreen('hub-screen')">Back</button>
+  </div>
+</div>
+
+<!-- MULTIPLAYER -->
+<div id="mp-screen" class="screen panel-screen">
+  <div class="panel-card" style="max-width:560px">
+    <h2>Online Multiplayer</h2>
+    <p class="form-hint">Play against 1, 2, or 3 opponents. This build simulates the room on your device.</p>
+    <p style="text-align:center;color:var(--gold-l);font-family:'Cinzel',serif;letter-spacing:.06em;margin-top:.4rem">Opponents</p>
+    <div class="count-row">
+      <button class="count-btn" data-mp="1" onclick="setMPCount(1)">1<small>opponent</small></button>
+      <button class="count-btn" data-mp="2" onclick="setMPCount(2)">2<small>opponents</small></button>
+      <button class="count-btn on" data-mp="3" onclick="setMPCount(3)">3<small>opponents</small></button>
+    </div>
+    <div class="mode-grid">
+      <button class="mode-btn" onclick="MP.createRoom()"><h3>Create Room</h3><p>Host a private table. Share the code.</p></button>
+      <button class="mode-btn" onclick="document.getElementById('mp-join-box').style.display='block'"><h3>Join Room</h3><p>Enter a friend's room code.</p></button>
+    </div>
+    <div id="mp-join-box" style="display:none;margin:.5rem 0">
+      <input id="mp-code" placeholder="Room code e.g. STOOL" style="text-transform:uppercase">
+      <button class="btn" style="width:100%" onclick="MP.joinRoom()">Join</button>
+    </div>
+    <button class="btn btn-ghost" style="width:100%" onclick="MP.quickMatch()">Quick Match (simulated)</button>
+    <div id="mp-lobby" style="display:none;margin-top:1rem">
+      <p style="color:var(--muted);font-size:.8rem">Room code</p>
+      <div class="room-code" id="mp-room-code">----</div>
+      <div id="mp-seats"></div>
+      <label class="field">Your ready status</label>
+      <button class="btn" style="width:100%" id="mp-ready-btn" onclick="MP.toggleReady()">Ready</button>
+      <button class="btn btn-ghost" style="width:100%" onclick="MP.startIfReady()">Start When All Ready</button>
+      <button class="btn btn-ghost btn-danger" style="width:100%;margin-top:.4rem" onclick="MP.leave()">Leave Room</button>
+      <p class="form-hint" id="mp-net-status">NetAPI: simulated local bus</p>
+    </div>
+    <button class="btn btn-ghost" style="width:100%;margin-top:.6rem" onclick="showScreen('hub-screen')">Back</button>
+  </div>
+</div>
+
+
+<!-- GAME -->
+<div id="game-screen" class="screen">
+  <div class="sidebar">
+    <div class="sec">Table</div>
+    <div id="seat-list"></div>
+    <div id="solo-status" style="display:none;font-size:.78rem;color:var(--gold-l);margin:.35rem 0;line-height:1.35"></div>
+    <div class="sec">Your / Active Hand Note</div>
+    <div id="active-fx" style="font-size:.78rem;color:var(--muted)">No effects</div>
+    <div class="sec">Battle Log</div>
+    <div class="log" id="game-log"></div>
+    <button class="btn btn-ghost btn-sm" style="margin-top:auto;width:100%" onclick="openOptions()">Options</button>
+    <button class="btn btn-ghost btn-sm" style="width:100%" onclick="openModal('rules-modal')">Rules</button>
+    <button class="btn btn-ghost btn-sm" style="width:100%" onclick="confirmQuit()">Quit</button>
+  </div>
+  <div class="main">
+    <div class="topbar" id="topbar"></div>
+    <div class="board-wrap">
+      <div id="board">
+        <img class="bg" src="/ludu/assets/board/board.jpg" alt="">
+        <div id="overlay"></div>
+        <div class="toast" id="toast"><div class="big" id="toast-ico"></div><div id="toast-txt"></div></div>
+      </div>
+    </div>
+    <div class="play-dock">
+      <div class="controls">
+        <div class="die" id="die1" onclick="pickDie(0)">?</div>
+        <div class="die" id="die2" onclick="pickDie(1)">?</div>
+        <button class="btn" id="roll-btn" onclick="rollDice()">Roll</button>
+        <button class="btn btn-ghost" id="end-btn" onclick="endTurn()">End Turn</button>
+        <button class="btn btn-ghost btn-sm" id="leader-btn" onclick="useLeader()">Leader</button>
+      </div>
+      <p id="moves-lbl" class="moves-lbl">Roll the die. Play one tactic before or after, then End Turn.</p>
+      <div class="dock-row">
+        <img id="dock-hero" class="dock-hero" alt="" src="/ludu/assets/leaders/Leader_Ashanti_Osei_Tutu_I.jpg">
+        <div>
+          <div id="dock-who" class="dock-who">Your leader</div>
+          <div class="dock-note">One tactic a turn. Tap Play. It is discarded. A priestess can bring one card back. An empty hand still races.</div>
+        </div>
+      </div>
+      <div class="hand" id="hand"></div>
+      <div class="discard-row" id="discard-row"></div>
+      <div id="discard-lbl" class="discard-lbl"></div>
+    </div>
+  </div>
+  <div class="sidebar right">
+    <div class="sec">Active Empire</div>
+    <div id="side-active"></div>
+    <div class="sec">Tokens</div>
+    <div id="side-tokens"></div>
+    <div class="sec">Power-ups on the path</div>
+    <div style="font-size:.7rem;color:var(--muted);line-height:1.5">
+      🌿🥁 Help you<br>🌪🔥👁 Hinder foes<br>💧 Whole board<br>
+      Land on a tile to trigger it. A new one then appears.
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal" id="rules-modal"><div class="box" style="text-align:left">
+  <h2 style="text-align:center" data-i18n="rulesTitle">How to Play</h2>
+  <div id="rules-body" data-i18n="rulesHtml" data-i18n-html>
+  <p>Get all 4 tokens from your yard onto the <strong>Golden Stool</strong>. You need an <strong>exact</strong> count to sit the last step.</p>
+  <p><strong>Leaving home.</strong> A piece stays in the yard until you roll a <strong>6</strong>. That 6 walks six tiles from your colored gate. Once the piece is on the path, any number moves it that many spaces.</p>
+  <p><strong>One die</strong> is the usual game. A six earns another roll. Options can switch to two dice. Choose a piece, or let the dice move for you.</p>
+  <p><strong>Cards.</strong> Before the race, choose 5 cards from your clan’s deck. Each clan has its own power-ups. Play one card a turn, then it is discarded. A priestess can bring a discarded card back. If your hand is empty, you still roll and move.</p>
+  <p><strong>Story</strong> is a separate road of Invaders. Instant play is still the four Gold Coast empires: you against 3, online against 1–3, or 2–4 on one phone.</p>
+  <p><span style="color:#c9a227">■ Ashanti</span> · <span style="color:#3a7abd">■ Dagbon</span> · <span style="color:#0d9a9e">■ Fante</span> · <span style="color:#9b4d96">■ Ewe</span><br>Optional leaders: Yaa Asantewaa (Ashanti) · Ga Mantse (Fante).</p>
+  </div>
+  <div style="text-align:center"><button class="btn" data-i18n="gotit" onclick="closeModal('rules-modal')">Got it</button></div>
+</div></div>
+
+<div class="modal" id="opt-modal"><div class="box" style="text-align:left">
+  <h2 style="text-align:center" data-i18n="optTitle">Options</h2>
+  <p class="form-hint" id="opt-summary">Choose piece · 100%</p>
+  <div class="sec" data-i18n="howMove">How pieces move</div>
+  <div class="count-row">
+    <button type="button" class="count-btn on" data-move="choose" data-i18n="choose" data-i18n-sub="chooseSub" onclick="setMoveMode('choose')">Choose<small>tap your piece</small></button>
+    <button type="button" class="count-btn" data-move="auto" data-i18n="forme" data-i18n-sub="formeSub" onclick="setMoveMode('auto')">For me<small>dice move pieces</small></button>
+  </div>
+  <div class="sec" data-i18n="speed">Gameplay speed</div>
+  <div class="count-row">
+    <button type="button" class="count-btn" data-spd="slow" data-i18n="slow" onclick="setSpeed('slow')">Slow</button>
+    <button type="button" class="count-btn on" data-spd="normal" data-i18n="normal" onclick="setSpeed('normal')">Normal</button>
+    <button type="button" class="count-btn" data-spd="fast" data-i18n="fast" onclick="setSpeed('fast')">Fast</button>
+  </div>
+  <label class="opt-slider"><span data-i18n="gameSpd">Speed slider</span> <span id="spd-read">100%</span>
+    <input id="spd-range" type="range" min="40" max="240" value="100" oninput="setGameSpeed(this.value)">
+  </label>
+  <label class="opt-slider"><span data-i18n="powSpd">Power-up reveal</span> <span id="pow-read">55%</span>
+    <input id="pow-range" type="range" min="30" max="180" value="55" oninput="setPowerSpeed(this.value)">
+  </label>
+  <div class="sec" data-i18n="dice">Dice</div>
+  <div class="count-row">
+    <button type="button" class="count-btn on" data-dice="1" data-i18n="die1" onclick="setDiceCount(1)">1 die</button>
+    <button type="button" class="count-btn" data-dice="2" data-i18n="die2" onclick="setDiceCount(2)">2 dice</button>
+  </div>
+  <div class="sec" data-i18n="house">House rules</div>
+  <p class="form-hint" data-i18n="houseHint">One die, and a 6 to leave home, is the usual race. That 6 still walks six tiles. Safe stars stay on. The other switches are optional.</p>
+  <button type="button" class="opt-tog on" data-opt="safeHouses" onclick="toggleOpt('safeHouses')"><span data-i18n="safe">Safe houses</span><span class="st">On</span></button>
+  <button type="button" class="opt-tog" data-opt="barriers" onclick="toggleOpt('barriers')"><span data-i18n="barrier">Barriers</span><span class="st">Off</span></button>
+  <button type="button" class="opt-tog on" data-opt="sixToExit" onclick="toggleOpt('sixToExit')"><span data-i18n="six">Need a 6 to leave the yard</span><span class="st">On</span></button>
+  <button type="button" class="opt-tog" data-opt="removeOnCapture" onclick="toggleOpt('removeOnCapture')"><span data-i18n="remove">Capturing piece also returns</span><span class="st">Off</span></button>
+  <button type="button" class="opt-tog" data-opt="againOnCapture" onclick="toggleOpt('againOnCapture')"><span data-i18n="again">Extra roll after a capture</span><span class="st">Off</span></button>
+  <div class="sec" data-i18n="board">Turn the board</div>
+  <button type="button" class="btn btn-ghost" onclick="rotateBoard()">Rotate <span id="rot-read">0°</span></button>
+  <div class="sec" data-i18n="lang">Language</div>
+  <select id="lang-sel" onchange="setLang(this.value)">
+    <option value="en">English</option>
+    <option value="fr">Français</option>
+    <option value="it">Italiano</option>
+    <option value="id">Bahasa Indonesia</option>
+    <option value="de">Deutsch</option>
+    <option value="pt">Português</option>
+    <option value="es">Español</option>
+  </select>
+  <div style="text-align:center;margin-top:.8rem"><button class="btn" onclick="closeModal('opt-modal')">Done</button></div>
+</div></div>
+
+<div class="modal" id="share-modal"><div class="box">
+  <h2>Share LUDU</h2>
+  <p>Invite friends to race for the Golden Stool.</p>
+  <div class="share-row">
+    <button class="btn btn-sm" onclick="shareSocial('x')">X / Twitter</button>
+    <button class="btn btn-sm" onclick="shareSocial('fb')">Facebook</button>
+    <button class="btn btn-sm" onclick="shareSocial('wa')">WhatsApp</button>
+    <button class="btn btn-ghost btn-sm" onclick="shareNative()">System Share</button>
+  </div>
+  <button class="btn btn-ghost" onclick="closeModal('share-modal')">Close</button>
+</div></div>
+
+<div class="modal" id="win-modal"><div class="box">
+  <img id="win-img" src="/ludu/assets/ui/victory.jpg" style="max-height:180px;border-radius:8px;border:1px solid #3a2e1f;margin-bottom:.6rem" alt="">
+  <h2 id="win-title">Victory!</h2>
+  <p id="win-text"></p>
+  <div class="share-row">
+    <button class="btn btn-sm" onclick="shareWin()">Share Victory</button>
+    <button class="btn" id="win-map" style="display:none" onclick="returnToMap()">The Map</button>
+    <button class="btn" onclick="location.reload()">Menu</button>
+  </div>
+</div></div>
+
+<div class="modal" id="pass-modal"><div class="box">
+  <h2>Pass the phone</h2>
+  <p id="pass-text">Next player is ready.</p>
+  <button class="btn" onclick="closeModal('pass-modal')">I'm Ready</button>
+</div></div>
+
+<div class="modal" id="revive-modal"><div class="box" style="text-align:left">
+  <h2 style="text-align:center">Priestess Revive</h2>
+  <p>She returns <strong>one discarded tactic</strong> to your hand. You can play it on a later turn. She does <strong>not</strong> return herself — after this she is spent. She also blesses one piece still in your yard (+2 Strength this turn).</p>
+  <div class="hand" id="revive-list"></div>
+  <div style="text-align:center"><button class="btn btn-ghost" onclick="cancelRevive()">Send her back</button></div>
+</div></div>
+
+<div class="modal" id="ach-modal"><div class="box">
+  <h2>Achievement Unlocked</h2>
+  <p id="ach-modal-txt" style="font-size:1.2rem;color:var(--gold-l)"></p>
+  <button class="btn" onclick="closeModal('ach-modal')">Glorious</button>
+</div></div>

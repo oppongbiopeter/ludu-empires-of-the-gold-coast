@@ -2,35 +2,6 @@
 
 A dice-and-race board game in the spirit of West African ludo, set on the Gold Coast. Four empires — Ashanti, Dagbon, Fante, and Ewe — race four pieces each from their yards to the Golden Stool. You can play it in the browser with no account.
 
-The current game is the client in [`web/`](web/). The numbered folders are the art package (board, leaders, cards, tokens, rulebook, marketing). [`10_Playable_Digital_Game`](10_Playable_Digital_Game/) is an earlier standalone HTML prototype. It is not the ruleset below.
-
-## Where the files are
-
-| Path | Contents |
-| --- | --- |
-| [`web/`](web/) | Current browser client. Rules live in [`web/public/ludu/game.js`](web/public/ludu/game.js). |
-| [`01_Logo_and_Branding`](01_Logo_and_Branding/) | Logo |
-| [`02_Game_Board`](02_Game_Board/) | Board art |
-| [`03_Leaders`](03_Leaders/) | Gold Coast leaders, Yaa Asantewaa, Ga Mantse, and the five story captains |
-| [`04_Cards`](04_Cards/) | Tactic card art |
-| [`05_Tokens_and_Components`](05_Tokens_and_Components/) | Tokens, dice, power-up tiles |
-| [`06_Rulebook`](06_Rulebook/) | Rulebook layouts |
-| [`07_Marketing_and_Promo`](07_Marketing_and_Promo/) | Box art, poster, banners |
-| [`08_Expansion`](08_Expansion/) | Expansion concepts |
-| [`09_Digital_and_Extras`](09_Digital_and_Extras/) | Extras |
-| [`10_Playable_Digital_Game`](10_Playable_Digital_Game/) | Earlier HTML prototype, plus a copy of the story map |
-| [`00_README_and_Marketing.txt`](00_README_and_Marketing.txt) | Design notes and marketing copy from the art package |
-
-## Run the current client
-
-```bash
-cd web
-npm install
-npm run dev
-```
-
-No account and no database are required to play.
-
 ## How a match works
 
 - Roll the die on the board. The number you see is the number of tiles that piece visits. It steps from square to square and does not skip.
@@ -93,9 +64,3 @@ Story challengers. They take a colored yard on the same board. They are not a fi
 ## What this edition does not claim
 
 Same-room play is pass-and-play on one screen. There is no Bluetooth table. The online table in this build is simulated. Store listings, other studios, and other ludo titles are not this game.
-
----
-
-Original game design and generative art package for **Ludu: Empires of the Gold Coast**. Inspired by traditional Ghanaian *Ludu* and the tactical spirit of *Gwent* (The Witcher). Not affiliated with CD Projekt Red or any official Ghanaian institution.
-
-*Race for the Stool.*
